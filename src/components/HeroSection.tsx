@@ -2,8 +2,11 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Car, Users, MapPin, Shield } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="relative py-20 lg:py-32 overflow-hidden">
       {/* Background gradient */}
@@ -24,10 +27,10 @@ const HeroSection = () => {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="text-lg px-8 py-6">
+              <Button size="lg" className="text-lg px-8 py-6" onClick={() => navigate('/auth')}>
                 Find a Ride
               </Button>
-              <Button size="lg" variant="outline" className="text-lg px-8 py-6">
+              <Button size="lg" variant="outline" className="text-lg px-8 py-6" onClick={() => navigate('/auth')}>
                 Become a Driver
               </Button>
             </div>

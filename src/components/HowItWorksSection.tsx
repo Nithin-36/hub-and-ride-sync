@@ -2,8 +2,11 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Search, HandHeart, CreditCard } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const HowItWorksSection = () => {
+  const navigate = useNavigate();
+
   const steps = [
     {
       icon: UserPlus,
@@ -81,7 +84,7 @@ const HowItWorksSection = () => {
             <div className="space-y-4 mb-6">
               <div className="flex items-center space-x-3">
                 <div className="w-2 h-2 bg-primary rounded-full"></div>
-                <span className="text-sm">Earn up to $500/month</span>
+                <span className="text-sm">Earn up to ₹15,000/month</span>
               </div>
               <div className="flex items-center space-x-3">
                 <div className="w-2 h-2 bg-primary rounded-full"></div>
@@ -97,7 +100,9 @@ const HowItWorksSection = () => {
               </div>
             </div>
             
-            <Button className="w-full">Start Driving</Button>
+            <Button className="w-full" onClick={() => navigate('/auth')}>
+              Start Driving
+            </Button>
           </Card>
 
           <Card className="p-8 bg-gradient-to-br from-accent/20 to-primary/5 border-primary/20">
@@ -127,7 +132,7 @@ const HowItWorksSection = () => {
               </div>
             </div>
             
-            <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+            <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground" onClick={() => navigate('/auth')}>
               Find Rides
             </Button>
           </Card>
