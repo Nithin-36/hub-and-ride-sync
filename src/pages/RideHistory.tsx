@@ -8,16 +8,22 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, MapPin, Clock, IndianRupee, Star } from 'lucide-react';
 
+interface RideLocation {
+  address: string;
+  lat?: number;
+  lng?: number;
+}
+
 interface Ride {
   id: string;
-  pickup_location: { address: string };
-  destination_location: { address: string };
+  pickup_location: RideLocation;
+  destination_location: RideLocation;
   pickup_time: string;
-  actual_price: number;
-  estimated_price: number;
+  actual_price: number | null;
+  estimated_price: number | null;
   status: string;
-  passenger_rating: number;
-  driver_rating: number;
+  passenger_rating: number | null;
+  driver_rating: number | null;
   created_at: string;
 }
 
@@ -44,7 +50,19 @@ const RideHistory = () => {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      setRides(data || []);
+      
+      // Transform the data to match our interface
+      const transformedRides = (data || []).map(ride => ({
+        ...ride,
+        pickup_location: typeof ride.pickup_location === 'string' 
+          ? JSON.parse(ride.pickup_location) 
+          : ride.pickup_location,
+        destination_location: typeof ride.destination_location === 'string'
+          ? JSON.parse(ride.destination_location)
+          : ride.destination_location
+      }));
+      
+      setRides(transformedRides);
     } catch (error) {
       console.error('Error fetching ride history:', error);
     } finally {

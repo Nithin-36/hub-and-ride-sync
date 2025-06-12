@@ -9,14 +9,20 @@ import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, MapPin, Clock, Phone, Star } from 'lucide-react';
 
+interface RideLocation {
+  address: string;
+  lat?: number;
+  lng?: number;
+}
+
 interface ActiveRide {
   id: string;
-  pickup_location: { address: string };
-  destination_location: { address: string };
+  pickup_location: RideLocation;
+  destination_location: RideLocation;
   pickup_time: string;
-  estimated_price: number;
+  estimated_price: number | null;
   status: string;
-  driver_id?: string;
+  driver_id?: string | null;
 }
 
 const RideTracking = () => {
@@ -47,10 +53,22 @@ const RideTracking = () => {
         .single();
 
       if (error && error.code !== 'PGRST116') throw error;
-      setActiveRide(data);
       
-      // Update progress based on status
       if (data) {
+        // Transform the data to match our interface
+        const transformedRide = {
+          ...data,
+          pickup_location: typeof data.pickup_location === 'string' 
+            ? JSON.parse(data.pickup_location) 
+            : data.pickup_location,
+          destination_location: typeof data.destination_location === 'string'
+            ? JSON.parse(data.destination_location)
+            : data.destination_location
+        };
+        
+        setActiveRide(transformedRide);
+        
+        // Update progress based on status
         switch (data.status) {
           case 'pending': setProgress(25); break;
           case 'matched': setProgress(50); break;
@@ -77,7 +95,18 @@ const RideTracking = () => {
           filter: `passenger_id=eq.${user?.id}`
         },
         (payload) => {
-          setActiveRide(payload.new as ActiveRide);
+          const transformedRide = {
+            ...payload.new,
+            pickup_location: typeof payload.new.pickup_location === 'string' 
+              ? JSON.parse(payload.new.pickup_location) 
+              : payload.new.pickup_location,
+            destination_location: typeof payload.new.destination_location === 'string'
+              ? JSON.parse(payload.new.destination_location)
+              : payload.new.destination_location
+          };
+          
+          setActiveRide(transformedRide as ActiveRide);
+          
           // Update progress based on status
           switch (payload.new.status) {
             case 'pending': setProgress(25); break;
