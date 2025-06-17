@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
@@ -8,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, MapPin, Clock, Phone, Star } from 'lucide-react';
+import GoogleMap from '@/components/GoogleMap';
 
 interface RideLocation {
   address: string;
@@ -31,6 +31,7 @@ const RideTracking = () => {
   const [activeRide, setActiveRide] = useState<ActiveRide | null>(null);
   const [progress, setProgress] = useState(25);
   const [loading, setLoading] = useState(true);
+  const [driverLocation, setDriverLocation] = useState<{ lat: number; lng: number } | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -84,7 +85,7 @@ const RideTracking = () => {
   };
 
   const setupRealtimeSubscription = () => {
-    const channel = supabase
+    const rideChannel = supabase
       .channel('ride-updates')
       .on(
         'postgres_changes',
@@ -121,8 +122,29 @@ const RideTracking = () => {
       )
       .subscribe();
 
+    // Subscribe to driver location updates
+    const locationChannel = supabase
+      .channel('location-updates')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'ride_locations',
+          filter: `ride_id=eq.${activeRide?.id}`
+        },
+        (payload) => {
+          setDriverLocation({
+            lat: payload.new.latitude,
+            lng: payload.new.longitude
+          });
+        }
+      )
+      .subscribe();
+
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(rideChannel);
+      supabase.removeChannel(locationChannel);
     };
   };
 
@@ -219,6 +241,29 @@ const RideTracking = () => {
           </CardContent>
         </Card>
 
+        {/* Real-time Map */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Live Tracking</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <GoogleMap
+              pickup={activeRide.pickup_location.lat && activeRide.pickup_location.lng ? {
+                lat: activeRide.pickup_location.lat,
+                lng: activeRide.pickup_location.lng
+              } : undefined}
+              destination={activeRide.destination_location.lat && activeRide.destination_location.lng ? {
+                lat: activeRide.destination_location.lat,
+                lng: activeRide.destination_location.lng
+              } : undefined}
+              currentLocation={driverLocation}
+              showDirections={true}
+              height="400px"
+              className="rounded-lg overflow-hidden"
+            />
+          </CardContent>
+        </Card>
+
         {/* Trip Details */}
         <Card>
           <CardHeader>
@@ -290,26 +335,6 @@ const RideTracking = () => {
             </CardContent>
           </Card>
         )}
-
-        {/* Real-time Map Placeholder */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Live Tracking</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64 bg-muted rounded-lg flex items-center justify-center">
-              <div className="text-center">
-                <MapPin className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                <p className="text-muted-foreground">
-                  Real-time map tracking would appear here
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Integration with maps API coming soon
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     </div>
   );
