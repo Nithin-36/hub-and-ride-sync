@@ -37,14 +37,22 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
 
     const loadGoogleMapsAPI = () => {
       if (window.google && window.google.maps) {
+        console.log('Google Maps API already loaded');
         setIsApiLoaded(true);
         return;
       }
 
+      console.log('Loading Google Maps API with key:', apiKey.substring(0, 10) + '...');
       const script = document.createElement('script');
       script.src = `https://maps.googleapis.com/maps/api/js?key=${apiKey}&libraries=places`;
-      script.onload = () => setIsApiLoaded(true);
-      script.onerror = () => setError('Failed to load Google Maps API');
+      script.onload = () => {
+        console.log('Google Maps API loaded successfully');
+        setIsApiLoaded(true);
+      };
+      script.onerror = () => {
+        console.error('Failed to load Google Maps API');
+        setError('Failed to load Google Maps API');
+      };
       document.head.appendChild(script);
     };
 
@@ -53,11 +61,12 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
 
   // Initialize map
   useEffect(() => {
-    if (!isApiLoaded || !mapRef.current || !window.google) return;
+    if (!isApiLoaded || !mapRef.current || !window.google?.maps) return;
 
+    console.log('Initializing Google Map');
     const defaultCenter = pickup || destination || { lat: 28.6139, lng: 77.2090 }; // Delhi default
 
-    const map = new google.maps.Map(mapRef.current, {
+    const map = new window.google.maps.Map(mapRef.current, {
       zoom: 13,
       center: defaultCenter,
       mapTypeControl: false,
@@ -66,8 +75,8 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
     });
 
     mapInstanceRef.current = map;
-    directionsServiceRef.current = new google.maps.DirectionsService();
-    directionsRendererRef.current = new google.maps.DirectionsRenderer({
+    directionsServiceRef.current = new window.google.maps.DirectionsService();
+    directionsRendererRef.current = new window.google.maps.DirectionsRenderer({
       suppressMarkers: false,
       polylineOptions: {
         strokeColor: '#4F46E5',
@@ -83,12 +92,14 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
         if (event.latLng) {
           const lat = event.latLng.lat();
           const lng = event.latLng.lng();
+          console.log('Map clicked at:', lat, lng);
           
           // Reverse geocoding to get address
-          const geocoder = new google.maps.Geocoder();
+          const geocoder = new window.google.maps.Geocoder();
           try {
             const response = await geocoder.geocode({ location: { lat, lng } });
             const address = response.results[0]?.formatted_address || `${lat}, ${lng}`;
+            console.log('Geocoded address:', address);
             onLocationSelect({ lat, lng, address });
           } catch (error) {
             console.error('Geocoding error:', error);
@@ -101,16 +112,15 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
 
   // Add markers and directions
   useEffect(() => {
-    if (!mapInstanceRef.current || !window.google) return;
+    if (!mapInstanceRef.current || !window.google?.maps) return;
 
+    console.log('Adding markers and directions', { pickup, destination, currentLocation });
     const map = mapInstanceRef.current;
 
-    // Clear existing markers
-    // Note: In a production app, you'd want to manage markers more efficiently
-    
     // Add pickup marker
     if (pickup) {
-      new google.maps.Marker({
+      console.log('Adding pickup marker at:', pickup);
+      new window.google.maps.Marker({
         position: pickup,
         map,
         title: 'Pickup Location',
@@ -121,14 +131,15 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
               <circle cx="16" cy="16" r="8" fill="white"/>
             </svg>
           `),
-          scaledSize: new google.maps.Size(32, 32),
+          scaledSize: new window.google.maps.Size(32, 32),
         },
       });
     }
 
     // Add destination marker
     if (destination) {
-      new google.maps.Marker({
+      console.log('Adding destination marker at:', destination);
+      new window.google.maps.Marker({
         position: destination,
         map,
         title: 'Destination',
@@ -139,14 +150,15 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
               <circle cx="16" cy="16" r="8" fill="white"/>
             </svg>
           `),
-          scaledSize: new google.maps.Size(32, 32),
+          scaledSize: new window.google.maps.Size(32, 32),
         },
       });
     }
 
     // Add current location marker (for driver tracking)
     if (currentLocation) {
-      new google.maps.Marker({
+      console.log('Adding current location marker at:', currentLocation);
+      new window.google.maps.Marker({
         position: currentLocation,
         map,
         title: 'Current Location',
@@ -157,29 +169,33 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
               <circle cx="16" cy="16" r="8" fill="white"/>
             </svg>
           `),
-          scaledSize: new google.maps.Size(32, 32),
+          scaledSize: new window.google.maps.Size(32, 32),
         },
       });
     }
 
     // Show directions if both pickup and destination are available
     if (showDirections && pickup && destination && directionsServiceRef.current && directionsRendererRef.current) {
+      console.log('Calculating directions from pickup to destination');
       directionsServiceRef.current.route(
         {
           origin: pickup,
           destination: destination,
-          travelMode: google.maps.TravelMode.DRIVING,
+          travelMode: window.google.maps.TravelMode.DRIVING,
         },
         (result, status) => {
+          console.log('Directions result:', status);
           if (status === 'OK' && result && directionsRendererRef.current) {
             directionsRendererRef.current.setDirections(result);
+          } else {
+            console.error('Directions request failed:', status);
           }
         }
       );
     }
 
     // Fit bounds to show all markers
-    const bounds = new google.maps.LatLngBounds();
+    const bounds = new window.google.maps.LatLngBounds();
     if (pickup) bounds.extend(pickup);
     if (destination) bounds.extend(destination);
     if (currentLocation) bounds.extend(currentLocation);
@@ -187,11 +203,11 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
     if (!bounds.isEmpty()) {
       map.fitBounds(bounds);
       // Ensure minimum zoom level
-      const listener = google.maps.event.addListener(map, 'bounds_changed', () => {
+      const listener = window.google.maps.event.addListener(map, 'bounds_changed', () => {
         if (map.getZoom() && map.getZoom()! > 15) {
           map.setZoom(15);
         }
-        google.maps.event.removeListener(listener);
+        window.google.maps.event.removeListener(listener);
       });
     }
   }, [pickup, destination, currentLocation, showDirections, isApiLoaded]);

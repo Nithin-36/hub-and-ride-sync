@@ -25,10 +25,15 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
   }, [value]);
 
   useEffect(() => {
-    if (!window.google || !window.google.maps || !inputRef.current) return;
+    if (!window.google?.maps?.places || !inputRef.current) {
+      console.log('Google Places API not available yet');
+      return;
+    }
+
+    console.log('Initializing Google Places Autocomplete');
 
     // Initialize Google Places Autocomplete
-    autocompleteRef.current = new google.maps.places.Autocomplete(inputRef.current, {
+    autocompleteRef.current = new window.google.maps.places.Autocomplete(inputRef.current, {
       types: ['establishment', 'geocode'],
       componentRestrictions: { country: 'IN' }, // Restrict to India
     });
@@ -36,11 +41,14 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
     // Listen for place selection
     autocompleteRef.current.addListener('place_changed', () => {
       const place = autocompleteRef.current?.getPlace();
+      console.log('Place selected:', place);
+      
       if (place && place.geometry && place.geometry.location) {
         const lat = place.geometry.location.lat();
         const lng = place.geometry.location.lng();
         const address = place.formatted_address || place.name || '';
         
+        console.log('Location selected:', { lat, lng, address });
         setInputValue(address);
         onLocationSelect({ lat, lng, address });
       }
@@ -48,7 +56,7 @@ const LocationSearch: React.FC<LocationSearchProps> = ({
 
     return () => {
       if (autocompleteRef.current) {
-        google.maps.event.clearInstanceListeners(autocompleteRef.current);
+        window.google.maps.event.clearInstanceListeners(autocompleteRef.current);
       }
     };
   }, [onLocationSelect]);

@@ -10,13 +10,14 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Car, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { UserRole } from '@/types/user';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState<'driver' | 'passenger'>('passenger');
+  const [role, setRole] = useState<UserRole>('passenger');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { signUp, signIn } = useAuth();
@@ -27,52 +28,67 @@ const Auth = () => {
     setError('');
     setLoading(true);
 
-    console.log('Form submitted:', { isLogin, email, role, fullName });
+    console.log('Form submitted:', { 
+      isLogin, 
+      email, 
+      role: !isLogin ? role : 'N/A', 
+      fullName: !isLogin ? fullName : 'N/A' 
+    });
 
     try {
       if (isLogin) {
-        const { error } = await signIn(email, password);
+        console.log('Attempting login...');
+        const { error } = await signIn({ email, password });
         if (error) {
           console.error('Login failed:', error);
           setError(error.message || 'Login failed');
-          toast.error('Login failed: ' + (error.message || 'Unknown error'));
         } else {
+          console.log('Login successful, navigating to dashboard');
           navigate('/dashboard');
         }
       } else {
         if (!fullName.trim()) {
-          setError('Full name is required');
-          toast.error('Full name is required');
+          const errorMsg = 'Full name is required';
+          console.error('Validation error:', errorMsg);
+          setError(errorMsg);
+          toast.error(errorMsg);
           return;
         }
 
-        const { error } = await signUp(email, password, fullName, role);
+        if (password.length < 6) {
+          const errorMsg = 'Password must be at least 6 characters long';
+          console.error('Validation error:', errorMsg);
+          setError(errorMsg);
+          toast.error(errorMsg);
+          return;
+        }
+
+        console.log('Attempting signup...');
+        const { error } = await signUp({ email, password, fullName, role });
         if (error) {
           console.error('Signup failed:', error);
           setError(error.message || 'Signup failed');
-          
-          // More specific error handling
-          if (error.message?.includes('Database error')) {
-            setError('Database configuration issue. Please contact support.');
-            toast.error('Database configuration issue. The user profiles table may not be set up correctly.');
-          } else if (error.message?.includes('already registered')) {
-            setError('An account with this email already exists.');
-            toast.error('An account with this email already exists.');
-          } else {
-            toast.error('Signup failed: ' + (error.message || 'Unknown error'));
-          }
         } else {
-          toast.success('Account created! Please check your email for verification.');
+          console.log('Signup successful');
           // Don't navigate immediately for signup, let user verify email first
         }
       }
     } catch (error: any) {
-      console.error('Unexpected error:', error);
+      console.error('Unexpected error during authentication:', error);
       setError('An unexpected error occurred');
       toast.error('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
+  };
+
+  const toggleForm = () => {
+    console.log('Toggling form from', isLogin ? 'login' : 'signup', 'to', !isLogin ? 'login' : 'signup');
+    setIsLogin(!isLogin);
+    setError('');
+    setFullName('');
+    setEmail('');
+    setPassword('');
   };
 
   return (
@@ -133,7 +149,7 @@ const Auth = () => {
             {!isLogin && (
               <div className="space-y-3">
                 <Label>Choose your role</Label>
-                <RadioGroup value={role} onValueChange={(value: 'driver' | 'passenger') => setRole(value)}>
+                <RadioGroup value={role} onValueChange={(value: UserRole) => setRole(value)}>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="passenger" id="passenger" />
                     <Label htmlFor="passenger" className="flex items-center space-x-2 cursor-pointer">
@@ -166,11 +182,7 @@ const Auth = () => {
               type="button"
               variant="ghost"
               className="w-full"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                setError('');
-                setFullName('');
-              }}
+              onClick={toggleForm}
             >
               {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </Button>
