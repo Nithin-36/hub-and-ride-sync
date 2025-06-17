@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Car, Users } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -26,18 +27,49 @@ const Auth = () => {
     setError('');
     setLoading(true);
 
+    console.log('Form submitted:', { isLogin, email, role, fullName });
+
     try {
       if (isLogin) {
         const { error } = await signIn(email, password);
-        if (error) throw error;
-        navigate('/dashboard');
+        if (error) {
+          console.error('Login failed:', error);
+          setError(error.message || 'Login failed');
+          toast.error('Login failed: ' + (error.message || 'Unknown error'));
+        } else {
+          navigate('/dashboard');
+        }
       } else {
+        if (!fullName.trim()) {
+          setError('Full name is required');
+          toast.error('Full name is required');
+          return;
+        }
+
         const { error } = await signUp(email, password, fullName, role);
-        if (error) throw error;
-        navigate('/dashboard');
+        if (error) {
+          console.error('Signup failed:', error);
+          setError(error.message || 'Signup failed');
+          
+          // More specific error handling
+          if (error.message?.includes('Database error')) {
+            setError('Database configuration issue. Please contact support.');
+            toast.error('Database configuration issue. The user profiles table may not be set up correctly.');
+          } else if (error.message?.includes('already registered')) {
+            setError('An account with this email already exists.');
+            toast.error('An account with this email already exists.');
+          } else {
+            toast.error('Signup failed: ' + (error.message || 'Unknown error'));
+          }
+        } else {
+          toast.success('Account created! Please check your email for verification.');
+          // Don't navigate immediately for signup, let user verify email first
+        }
       }
     } catch (error: any) {
-      setError(error.message);
+      console.error('Unexpected error:', error);
+      setError('An unexpected error occurred');
+      toast.error('An unexpected error occurred');
     } finally {
       setLoading(false);
     }
@@ -67,7 +99,8 @@ const Auth = () => {
                   type="text"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
-                  required
+                  required={!isLogin}
+                  placeholder="Enter your full name"
                 />
               </div>
             )}
@@ -80,6 +113,7 @@ const Auth = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                placeholder="Enter your email"
               />
             </div>
             
@@ -91,6 +125,8 @@ const Auth = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                placeholder="Enter your password"
+                minLength={6}
               />
             </div>
 
@@ -130,7 +166,11 @@ const Auth = () => {
               type="button"
               variant="ghost"
               className="w-full"
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => {
+                setIsLogin(!isLogin);
+                setError('');
+                setFullName('');
+              }}
             >
               {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </Button>

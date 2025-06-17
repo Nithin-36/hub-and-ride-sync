@@ -8,11 +8,13 @@ declare global {
 declare namespace google {
   namespace maps {
     class Map {
-      constructor(mapDiv: Element | null, opts?: MapOptions);
+      constructor(mapDiv: HTMLElement, opts?: MapOptions);
       setZoom(zoom: number): void;
       getZoom(): number | undefined;
+      setCenter(latLng: LatLng | LatLngLiteral): void;
+      getCenter(): LatLng;
       fitBounds(bounds: LatLngBounds): void;
-      addListener(eventName: string, handler: Function): MapsEventListener;
+      addListener(eventName: string, handler: (event?: any) => void): MapsEventListener;
     }
 
     interface MapOptions {
@@ -53,7 +55,7 @@ declare namespace google {
 
     interface Icon {
       url: string;
-      scaledSize?: Size;
+      scaledSize: Size;
     }
 
     class Size {
@@ -72,10 +74,12 @@ declare namespace google {
 
     interface DirectionsRendererOptions {
       suppressMarkers?: boolean;
-      polylineOptions?: {
-        strokeColor?: string;
-        strokeWeight?: number;
-      };
+      polylineOptions?: PolylineOptions;
+    }
+
+    interface PolylineOptions {
+      strokeColor?: string;
+      strokeWeight?: number;
     }
 
     interface DirectionsRequest {
@@ -84,35 +88,20 @@ declare namespace google {
       travelMode: TravelMode;
     }
 
-    interface DirectionsResult {
-      routes: DirectionsRoute[];
-    }
-
-    interface DirectionsRoute {
-      legs: DirectionsLeg[];
-    }
-
-    interface DirectionsLeg {
-      distance?: { text: string; value: number };
-      duration?: { text: string; value: number };
-    }
+    interface DirectionsResult {}
 
     enum TravelMode {
-      DRIVING = 'DRIVING',
-      WALKING = 'WALKING',
-      BICYCLING = 'BICYCLING',
-      TRANSIT = 'TRANSIT'
+      DRIVING = 'DRIVING'
     }
 
     type DirectionsStatus = 'OK' | 'NOT_FOUND' | 'ZERO_RESULTS' | 'MAX_WAYPOINTS_EXCEEDED' | 'INVALID_REQUEST' | 'OVER_QUERY_LIMIT' | 'REQUEST_DENIED' | 'UNKNOWN_ERROR';
 
     class Geocoder {
       geocode(request: GeocoderRequest): Promise<GeocoderResponse>;
-      geocode(request: GeocoderRequest, callback: (results: GeocoderResult[], status: GeocoderStatus) => void): void;
     }
 
     interface GeocoderRequest {
-      location?: LatLng | LatLngLiteral;
+      location: LatLng | LatLngLiteral;
     }
 
     interface GeocoderResponse {
@@ -123,41 +112,47 @@ declare namespace google {
       formatted_address: string;
     }
 
-    type GeocoderStatus = 'OK' | 'ZERO_RESULTS' | 'OVER_QUERY_LIMIT' | 'REQUEST_DENIED' | 'INVALID_REQUEST' | 'UNKNOWN_ERROR';
-
-    interface MapMouseEvent {
-      latLng: LatLng | null;
+    class NavigationControl {
+      constructor(opts?: NavigationControlOptions);
     }
+
+    interface NavigationControlOptions {
+      visualizePitch?: boolean;
+    }
+
+    interface MapsEventListener {}
 
     namespace event {
       function addListener(instance: any, eventName: string, handler: Function): MapsEventListener;
       function removeListener(listener: MapsEventListener): void;
       function clearInstanceListeners(instance: any): void;
     }
+  }
 
-    interface MapsEventListener {
-      remove(): void;
+  namespace maps.places {
+    class Autocomplete {
+      constructor(inputField: HTMLInputElement, opts?: AutocompleteOptions);
+      addListener(eventName: string, handler: () => void): void;
+      getPlace(): PlaceResult;
     }
 
-    namespace places {
-      class Autocomplete {
-        constructor(inputField: HTMLInputElement, opts?: AutocompleteOptions);
-        addListener(eventName: string, handler: Function): void;
-        getPlace(): PlaceResult;
-      }
+    interface AutocompleteOptions {
+      types?: string[];
+      componentRestrictions?: ComponentRestrictions;
+    }
 
-      interface AutocompleteOptions {
-        types?: string[];
-        componentRestrictions?: { country: string };
-      }
+    interface ComponentRestrictions {
+      country: string | string[];
+    }
 
-      interface PlaceResult {
-        geometry?: {
-          location?: LatLng;
-        };
-        formatted_address?: string;
-        name?: string;
-      }
+    interface PlaceResult {
+      formatted_address?: string;
+      name?: string;
+      geometry?: PlaceGeometry;
+    }
+
+    interface PlaceGeometry {
+      location?: google.maps.LatLng;
     }
   }
 }
