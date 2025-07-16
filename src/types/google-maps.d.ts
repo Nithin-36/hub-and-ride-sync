@@ -9,7 +9,7 @@ declare namespace google {
   namespace maps {
     class Map {
       constructor(mapDiv: HTMLElement, opts?: MapOptions);
-      addListener(eventName: string, handler: Function): void;
+      addListener(eventName: string, handler: Function): MapsEventListener;
       fitBounds(bounds: LatLngBounds): void;
       getZoom(): number | undefined;
       setZoom(zoom: number): void;
@@ -111,15 +111,18 @@ declare namespace google {
       latLng: LatLng | null;
     }
 
+    interface MapsEventListener {}
+
     namespace event {
-      function addListener(instance: object, eventName: string, handler: Function): void;
-      function removeListener(listener: any): void;
+      function addListener(instance: object, eventName: string, handler: Function): MapsEventListener;
+      function removeListener(listener: MapsEventListener): void;
+      function clearInstanceListeners(instance: object): void;
     }
 
     namespace places {
       class Autocomplete {
         constructor(inputField: HTMLInputElement, opts?: AutocompleteOptions);
-        addListener(eventName: string, handler: Function): void;
+        addListener(eventName: string, handler: Function): MapsEventListener;
         getPlace(): PlaceResult;
       }
 
