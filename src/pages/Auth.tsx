@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/MockAuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,14 +10,13 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Car, Users } from 'lucide-react';
 import { toast } from 'sonner';
-import { UserRole } from '@/types/user';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
-  const [role, setRole] = useState<UserRole>('passenger');
+  const [role, setRole] = useState<'driver' | 'passenger'>('passenger');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { signUp, signIn } = useAuth();
@@ -28,28 +27,19 @@ const Auth = () => {
     setError('');
     setLoading(true);
 
-    console.log('Form submitted:', { 
-      isLogin, 
-      email, 
-      role: !isLogin ? role : 'N/A', 
-      fullName: !isLogin ? fullName : 'N/A' 
-    });
-
     try {
       if (isLogin) {
-        console.log('Attempting login...');
         const { error } = await signIn({ email, password });
         if (error) {
-          console.error('Login failed:', error);
           setError(error.message || 'Login failed');
+          toast.error(error.message || 'Login failed');
         } else {
-          console.log('Login successful, navigating to dashboard');
+          toast.success('Successfully signed in!');
           navigate('/dashboard');
         }
       } else {
         if (!fullName.trim()) {
           const errorMsg = 'Full name is required';
-          console.error('Validation error:', errorMsg);
           setError(errorMsg);
           toast.error(errorMsg);
           return;
@@ -57,24 +47,21 @@ const Auth = () => {
 
         if (password.length < 6) {
           const errorMsg = 'Password must be at least 6 characters long';
-          console.error('Validation error:', errorMsg);
           setError(errorMsg);
           toast.error(errorMsg);
           return;
         }
 
-        console.log('Attempting signup...');
         const { error } = await signUp({ email, password, fullName, role });
         if (error) {
-          console.error('Signup failed:', error);
           setError(error.message || 'Signup failed');
+          toast.error(error.message || 'Signup failed');
         } else {
-          console.log('Signup successful');
-          // Don't navigate immediately for signup, let user verify email first
+          toast.success('Account created successfully!');
+          navigate('/dashboard');
         }
       }
     } catch (error: any) {
-      console.error('Unexpected error during authentication:', error);
       setError('An unexpected error occurred');
       toast.error('An unexpected error occurred');
     } finally {
@@ -83,7 +70,6 @@ const Auth = () => {
   };
 
   const toggleForm = () => {
-    console.log('Toggling form from', isLogin ? 'login' : 'signup', 'to', !isLogin ? 'login' : 'signup');
     setIsLogin(!isLogin);
     setError('');
     setFullName('');
@@ -149,7 +135,7 @@ const Auth = () => {
             {!isLogin && (
               <div className="space-y-3">
                 <Label>Choose your role</Label>
-                <RadioGroup value={role} onValueChange={(value: UserRole) => setRole(value)}>
+                <RadioGroup value={role} onValueChange={(value: 'driver' | 'passenger') => setRole(value)}>
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="passenger" id="passenger" />
                     <Label htmlFor="passenger" className="flex items-center space-x-2 cursor-pointer">

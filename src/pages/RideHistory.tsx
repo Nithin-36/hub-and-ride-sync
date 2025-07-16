@@ -1,36 +1,26 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/MockAuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, MapPin, Clock, IndianRupee, Star } from 'lucide-react';
+import { ArrowLeft, Clock, IndianRupee, Star } from 'lucide-react';
 
-interface RideLocation {
-  address: string;
-  lat?: number;
-  lng?: number;
-}
-
-interface Ride {
+interface MockBooking {
   id: string;
-  pickup_location: RideLocation;
-  destination_location: RideLocation;
-  pickup_time: string;
-  actual_price: number | null;
-  estimated_price: number | null;
+  pickupAddress: string;
+  destinationAddress: string;
+  pickupTime: string;
+  estimatedPrice: number;
   status: string;
-  passenger_rating: number | null;
-  driver_rating: number | null;
-  created_at: string;
+  createdAt: string;
 }
 
 const RideHistory = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [rides, setRides] = useState<Ride[]>([]);
+  const [rides, setRides] = useState<MockBooking[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -43,26 +33,9 @@ const RideHistory = () => {
 
   const fetchRideHistory = async () => {
     try {
-      const { data, error } = await supabase
-        .from('rides')
-        .select('*')
-        .or(`passenger_id.eq.${user?.id},driver_id.eq.${user?.id}`)
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-      
-      // Transform the data to match our interface
-      const transformedRides = (data || []).map(ride => ({
-        ...ride,
-        pickup_location: typeof ride.pickup_location === 'string' 
-          ? JSON.parse(ride.pickup_location) 
-          : ride.pickup_location,
-        destination_location: typeof ride.destination_location === 'string'
-          ? JSON.parse(ride.destination_location)
-          : ride.destination_location
-      }));
-      
-      setRides(transformedRides);
+      // Get bookings from localStorage
+      const bookings: MockBooking[] = JSON.parse(localStorage.getItem('mockBookings') || '[]');
+      setRides(bookings.reverse()); // Show newest first
     } catch (error) {
       console.error('Error fetching ride history:', error);
     } finally {
@@ -122,7 +95,7 @@ const RideHistory = () => {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base">
-                      {new Date(ride.pickup_time).toLocaleDateString('en-IN', {
+                      {new Date(ride.pickupTime).toLocaleDateString('en-IN', {
                         weekday: 'long',
                         year: 'numeric',
                         month: 'long',
@@ -143,14 +116,14 @@ const RideHistory = () => {
                       <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
                       <div>
                         <p className="text-sm text-muted-foreground">Pickup</p>
-                        <p className="font-medium">{ride.pickup_location.address}</p>
+                        <p className="font-medium">{ride.pickupAddress}</p>
                       </div>
                     </div>
                     <div className="flex items-start space-x-2">
                       <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
                       <div>
                         <p className="text-sm text-muted-foreground">Destination</p>
-                        <p className="font-medium">{ride.destination_location.address}</p>
+                        <p className="font-medium">{ride.destinationAddress}</p>
                       </div>
                     </div>
                   </div>
@@ -160,22 +133,20 @@ const RideHistory = () => {
                       <div className="flex items-center space-x-1">
                         <Clock className="h-4 w-4" />
                         <span>
-                          {new Date(ride.pickup_time).toLocaleTimeString('en-IN', {
+                          {new Date(ride.pickupTime).toLocaleTimeString('en-IN', {
                             hour: '2-digit',
                             minute: '2-digit'
                           })}
                         </span>
                       </div>
-                      {(ride.passenger_rating || ride.driver_rating) && (
-                        <div className="flex items-center space-x-1">
-                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                          <span>{ride.passenger_rating || ride.driver_rating}/5</span>
-                        </div>
-                      )}
+                      <div className="flex items-center space-x-1">
+                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                        <span>5.0/5</span>
+                      </div>
                     </div>
                     <div className="flex items-center text-lg font-bold">
                       <IndianRupee className="h-4 w-4" />
-                      {ride.actual_price || ride.estimated_price}
+                      {ride.estimatedPrice}
                     </div>
                   </div>
                 </CardContent>

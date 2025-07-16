@@ -1,8 +1,7 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/MockAuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -10,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { ArrowLeft, Clock, IndianRupee, MapPin } from 'lucide-react';
+import { toast } from 'sonner';
 
 const BookRide = () => {
   const { user } = useAuth();
@@ -17,8 +17,8 @@ const BookRide = () => {
   const [pickupAddress, setPickupAddress] = useState('');
   const [destinationAddress, setDestinationAddress] = useState('');
   const [pickupTime, setPickupTime] = useState('');
-  const [estimatedDistance, setEstimatedDistance] = useState(15); // km
-  const [estimatedPrice, setEstimatedPrice] = useState(120); // ₹8 per km
+  const [estimatedDistance] = useState(15); // km
+  const [estimatedPrice] = useState(120); // ₹8 per km
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -32,30 +32,29 @@ const BookRide = () => {
     setError('');
 
     try {
-      const pickupDateTime = new Date(pickupTime).toISOString();
+      // Simulate booking process
+      await new Promise(resolve => setTimeout(resolve, 2000));
       
-      const { error } = await supabase
-        .from('rides')
-        .insert({
-          passenger_id: user.id,
-          pickup_location: {
-            address: pickupAddress
-          },
-          destination_location: {
-            address: destinationAddress
-          },
-          pickup_time: pickupDateTime,
-          estimated_distance: estimatedDistance,
-          estimated_price: estimatedPrice,
-          status: 'pending'
-        });
-
-      if (error) throw error;
-
-      // Navigate to ride tracking page
+      // Store booking in localStorage for demo purposes
+      const booking = {
+        id: Math.random().toString(36).substr(2, 9),
+        pickupAddress,
+        destinationAddress,
+        pickupTime,
+        estimatedPrice,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      };
+      
+      const existingBookings = JSON.parse(localStorage.getItem('mockBookings') || '[]');
+      existingBookings.push(booking);
+      localStorage.setItem('mockBookings', JSON.stringify(existingBookings));
+      
+      toast.success('Ride booked successfully!');
       navigate('/ride-tracking');
     } catch (error: any) {
-      setError(error.message);
+      setError('Failed to book ride. Please try again.');
+      toast.error('Failed to book ride. Please try again.');
     } finally {
       setLoading(false);
     }

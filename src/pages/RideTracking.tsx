@@ -1,34 +1,27 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/MockAuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, MapPin, Clock, Phone, Star } from 'lucide-react';
+import { ArrowLeft, Clock, Phone, Star } from 'lucide-react';
 
-interface RideLocation {
-  address: string;
-  lat?: number;
-  lng?: number;
-}
-
-interface ActiveRide {
+interface MockBooking {
   id: string;
-  pickup_location: RideLocation;
-  destination_location: RideLocation;
-  pickup_time: string;
-  estimated_price: number | null;
+  pickupAddress: string;
+  destinationAddress: string;
+  pickupTime: string;
+  estimatedPrice: number;
   status: string;
-  driver_id?: string | null;
+  createdAt: string;
 }
 
 const RideTracking = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [activeRide, setActiveRide] = useState<ActiveRide | null>(null);
+  const [activeRide, setActiveRide] = useState<MockBooking | null>(null);
   const [progress, setProgress] = useState(25);
   const [loading, setLoading] = useState(true);
 
@@ -38,92 +31,27 @@ const RideTracking = () => {
       return;
     }
     fetchActiveRide();
-    setupRealtimeSubscription();
   }, [user, navigate]);
 
   const fetchActiveRide = async () => {
     try {
-      const { data, error } = await supabase
-        .from('rides')
-        .select('*')
-        .eq('passenger_id', user?.id)
-        .in('status', ['pending', 'matched', 'in_progress'])
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-
-      if (error && error.code !== 'PGRST116') throw error;
+      // Get bookings from localStorage
+      const bookings: MockBooking[] = JSON.parse(localStorage.getItem('mockBookings') || '[]');
+      const latestBooking = bookings[bookings.length - 1];
       
-      if (data) {
-        // Transform the data to match our interface
-        const transformedRide = {
-          ...data,
-          pickup_location: typeof data.pickup_location === 'string' 
-            ? JSON.parse(data.pickup_location) 
-            : data.pickup_location,
-          destination_location: typeof data.destination_location === 'string'
-            ? JSON.parse(data.destination_location)
-            : data.destination_location
-        };
+      if (latestBooking) {
+        setActiveRide(latestBooking);
+        setProgress(25);
         
-        setActiveRide(transformedRide);
-        
-        // Update progress based on status
-        switch (data.status) {
-          case 'pending': setProgress(25); break;
-          case 'matched': setProgress(50); break;
-          case 'in_progress': setProgress(75); break;
-          case 'completed': setProgress(100); break;
-        }
+        // Simulate ride progression
+        setTimeout(() => setProgress(50), 2000);
+        setTimeout(() => setProgress(75), 4000);
       }
     } catch (error) {
       console.error('Error fetching active ride:', error);
     } finally {
       setLoading(false);
     }
-  };
-
-  const setupRealtimeSubscription = () => {
-    const rideChannel = supabase
-      .channel('ride-updates')
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'rides',
-          filter: `passenger_id=eq.${user?.id}`
-        },
-        (payload) => {
-          const transformedRide = {
-            ...payload.new,
-            pickup_location: typeof payload.new.pickup_location === 'string' 
-              ? JSON.parse(payload.new.pickup_location) 
-              : payload.new.pickup_location,
-            destination_location: typeof payload.new.destination_location === 'string'
-              ? JSON.parse(payload.new.destination_location)
-              : payload.new.destination_location
-          };
-          
-          setActiveRide(transformedRide as ActiveRide);
-          
-          // Update progress based on status
-          switch (payload.new.status) {
-            case 'pending': setProgress(25); break;
-            case 'matched': setProgress(50); break;
-            case 'in_progress': setProgress(75); break;
-            case 'completed': 
-              setProgress(100);
-              setTimeout(() => navigate('/dashboard'), 2000);
-              break;
-          }
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(rideChannel);
-    };
   };
 
   const getStatusMessage = (status: string) => {
@@ -230,7 +158,7 @@ const RideTracking = () => {
                 <div className="w-3 h-3 bg-green-500 rounded-full mt-1.5"></div>
                 <div>
                   <p className="text-sm text-muted-foreground">Pickup</p>
-                  <p className="font-medium">{activeRide.pickup_location.address}</p>
+                  <p className="font-medium">{activeRide.pickupAddress}</p>
                 </div>
               </div>
               <div className="border-l-2 border-dashed border-muted ml-1.5 h-6"></div>
@@ -238,7 +166,7 @@ const RideTracking = () => {
                 <div className="w-3 h-3 bg-red-500 rounded-full mt-1.5"></div>
                 <div>
                   <p className="text-sm text-muted-foreground">Destination</p>
-                  <p className="font-medium">{activeRide.destination_location.address}</p>
+                  <p className="font-medium">{activeRide.destinationAddress}</p>
                 </div>
               </div>
             </div>
@@ -248,22 +176,22 @@ const RideTracking = () => {
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">
-                    {new Date(activeRide.pickup_time).toLocaleTimeString('en-IN', {
+                    {new Date(activeRide.pickupTime).toLocaleTimeString('en-IN', {
                       hour: '2-digit',
                       minute: '2-digit'
                     })}
                   </span>
                 </div>
                 <div className="text-lg font-bold">
-                  ₹{activeRide.estimated_price}
+                  ₹{activeRide.estimatedPrice}
                 </div>
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Driver Details (when matched) */}
-        {activeRide.status !== 'pending' && (
+        {/* Mock Driver Details */}
+        {progress > 25 && (
           <Card>
             <CardHeader>
               <CardTitle>Driver Details</CardTitle>
@@ -272,10 +200,10 @@ const RideTracking = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-                    <span className="text-primary-foreground font-bold">D</span>
+                    <span className="text-primary-foreground font-bold">JD</span>
                   </div>
                   <div>
-                    <p className="font-medium">Driver Name</p>
+                    <p className="font-medium">John Doe</p>
                     <div className="flex items-center space-x-1">
                       <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                       <span className="text-sm">4.8</span>

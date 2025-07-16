@@ -1,14 +1,13 @@
 
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ArrowLeft, Car, MapPin, Star, Phone, Search } from 'lucide-react';
 
-interface PrivateDriver {
+interface MockDriver {
   id: string;
   full_name: string;
   rating: number;
@@ -21,15 +20,60 @@ interface PrivateDriver {
   is_available: boolean;
 }
 
+// Mock data for demonstration
+const mockDrivers: MockDriver[] = [
+  {
+    id: '1',
+    full_name: 'Rajesh Kumar',
+    rating: 4.8,
+    total_rides: 156,
+    phone: '+91-9876543210',
+    vehicle_type: 'sedan',
+    vehicle_model: 'Honda City',
+    vehicle_color: 'White',
+    vehicle_number: 'MH-12-AB-1234',
+    is_available: true
+  },
+  {
+    id: '2',
+    full_name: 'Priya Sharma',
+    rating: 4.9,
+    total_rides: 203,
+    phone: '+91-9876543211',
+    vehicle_type: 'suv',
+    vehicle_model: 'Toyota Innova',
+    vehicle_color: 'Silver',
+    vehicle_number: 'DL-07-CD-5678',
+    is_available: true
+  },
+  {
+    id: '3',
+    full_name: 'Mohammed Ali',
+    rating: 4.7,
+    total_rides: 89,
+    phone: '+91-9876543212',
+    vehicle_type: 'hatchback',
+    vehicle_model: 'Maruti Swift',
+    vehicle_color: 'Red',
+    vehicle_number: 'KA-01-EF-9012',
+    is_available: false
+  }
+];
+
 const PrivateDrivers = () => {
   const navigate = useNavigate();
-  const [drivers, setDrivers] = useState<PrivateDriver[]>([]);
-  const [filteredDrivers, setFilteredDrivers] = useState<PrivateDriver[]>([]);
+  const [drivers, setDrivers] = useState<MockDriver[]>([]);
+  const [filteredDrivers, setFilteredDrivers] = useState<MockDriver[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchPrivateDrivers();
+    // Simulate API call
+    setTimeout(() => {
+      setDrivers(mockDrivers);
+      setFilteredDrivers(mockDrivers);
+      setLoading(false);
+    }, 1000);
   }, []);
 
   useEffect(() => {
@@ -40,50 +84,6 @@ const PrivateDrivers = () => {
     );
     setFilteredDrivers(filtered);
   }, [searchTerm, drivers]);
-
-  const fetchPrivateDrivers = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-          id,
-          full_name,
-          rating,
-          total_rides,
-          phone,
-          driver_profiles (
-            vehicle_type,
-            vehicle_model,
-            vehicle_color,
-            vehicle_number,
-            is_available
-          )
-        `)
-        .eq('role', 'driver')
-        .not('driver_profiles', 'is', null);
-
-      if (error) throw error;
-
-      const driversData = data?.map(profile => ({
-        id: profile.id,
-        full_name: profile.full_name,
-        rating: profile.rating,
-        total_rides: profile.total_rides,
-        phone: profile.phone || '',
-        vehicle_type: profile.driver_profiles[0]?.vehicle_type || '',
-        vehicle_model: profile.driver_profiles[0]?.vehicle_model || '',
-        vehicle_color: profile.driver_profiles[0]?.vehicle_color || '',
-        vehicle_number: profile.driver_profiles[0]?.vehicle_number || '',
-        is_available: profile.driver_profiles[0]?.is_available || false,
-      })) || [];
-
-      setDrivers(driversData);
-    } catch (error) {
-      console.error('Error fetching drivers:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleContactDriver = (phone: string) => {
     if (phone) {

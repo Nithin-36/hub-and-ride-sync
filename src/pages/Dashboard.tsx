@@ -1,59 +1,30 @@
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useAuth } from '@/context/MockAuthContext';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Car, MapPin, Clock, Star, History, Plus } from 'lucide-react';
 
-interface Profile {
-  id: string;
-  full_name: string;
-  role: 'driver' | 'passenger';
-  rating: number;
-  total_rides: number;
-}
-
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!user) {
       navigate('/auth');
       return;
     }
-
-    fetchProfile();
   }, [user, navigate]);
-
-  const fetchProfile = async () => {
-    try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user?.id)
-        .single();
-
-      if (error) throw error;
-      setProfile(data);
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
   };
 
-  if (loading) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
@@ -75,12 +46,12 @@ const Dashboard = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold">RideShareHub</h1>
-              <p className="text-sm text-muted-foreground">Welcome, {profile?.full_name}</p>
+              <p className="text-sm text-muted-foreground">Welcome, {user.full_name}</p>
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <Badge variant={profile?.role === 'driver' ? 'default' : 'secondary'}>
-              {profile?.role}
+            <Badge variant={user.role === 'driver' ? 'default' : 'secondary'}>
+              {user.role}
             </Badge>
             <Button variant="outline" onClick={handleSignOut}>
               Sign Out
@@ -98,9 +69,9 @@ const Dashboard = () => {
               <Star className="h-4 w-4 text-yellow-500" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{profile?.rating}/5</div>
+              <div className="text-2xl font-bold">5.0/5</div>
               <p className="text-xs text-muted-foreground">
-                Based on {profile?.total_rides} rides
+                Based on 0 rides
               </p>
             </CardContent>
           </Card>
@@ -111,9 +82,9 @@ const Dashboard = () => {
               <Car className="h-4 w-4 text-primary" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{profile?.total_rides}</div>
+              <div className="text-2xl font-bold">0</div>
               <p className="text-xs text-muted-foreground">
-                {profile?.role === 'driver' ? 'Rides provided' : 'Rides taken'}
+                {user.role === 'driver' ? 'Rides provided' : 'Rides taken'}
               </p>
             </CardContent>
           </Card>
@@ -134,7 +105,7 @@ const Dashboard = () => {
 
         {/* Action Cards */}
         <div className="grid md:grid-cols-2 gap-6">
-          {profile?.role === 'passenger' ? (
+          {user.role === 'passenger' ? (
             <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/book-ride')}>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
@@ -159,7 +130,7 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           ) : (
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/driver-dashboard')}>
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Car className="h-5 w-5" />
