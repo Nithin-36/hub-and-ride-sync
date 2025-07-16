@@ -1,20 +1,103 @@
 
+declare global {
+  interface Window {
+    google: typeof google;
+  }
+}
+
 declare namespace google {
   namespace maps {
     class Map {
-      constructor(element: HTMLElement, options?: MapOptions);
-      setCenter(latlng: LatLng | LatLngLiteral): void;
+      constructor(mapDiv: HTMLElement, opts?: MapOptions);
+      addListener(eventName: string, handler: Function): void;
+      fitBounds(bounds: LatLngBounds): void;
+      getZoom(): number | undefined;
       setZoom(zoom: number): void;
     }
 
     interface MapOptions {
-      center?: LatLng | LatLngLiteral;
       zoom?: number;
-      mapTypeId?: MapTypeId;
+      center?: LatLng | LatLngLiteral;
+      mapTypeControl?: boolean;
+      streetViewControl?: boolean;
+      fullscreenControl?: boolean;
     }
 
-    class LatLng {
-      constructor(lat: number, lng: number);
+    class Marker {
+      constructor(opts?: MarkerOptions);
+    }
+
+    interface MarkerOptions {
+      position?: LatLng | LatLngLiteral;
+      map?: Map;
+      title?: string;
+      icon?: string | Icon | Symbol;
+    }
+
+    interface Icon {
+      url: string;
+      scaledSize?: Size;
+    }
+
+    class Size {
+      constructor(width: number, height: number);
+    }
+
+    class DirectionsService {
+      route(request: DirectionsRequest, callback: (result: DirectionsResult | null, status: DirectionsStatus) => void): void;
+    }
+
+    class DirectionsRenderer {
+      constructor(opts?: DirectionsRendererOptions);
+      setMap(map: Map): void;
+      setDirections(directions: DirectionsResult): void;
+    }
+
+    interface DirectionsRendererOptions {
+      suppressMarkers?: boolean;
+      polylineOptions?: {
+        strokeColor?: string;
+        strokeWeight?: number;
+      };
+    }
+
+    interface DirectionsRequest {
+      origin: LatLng | LatLngLiteral | string;
+      destination: LatLng | LatLngLiteral | string;
+      travelMode: TravelMode;
+    }
+
+    interface DirectionsResult {}
+
+    type DirectionsStatus = 'OK' | 'NOT_FOUND' | 'ZERO_RESULTS' | 'MAX_WAYPOINTS_EXCEEDED' | 'INVALID_REQUEST' | 'OVER_QUERY_LIMIT' | 'REQUEST_DENIED' | 'UNKNOWN_ERROR';
+
+    enum TravelMode {
+      DRIVING = 'DRIVING',
+      WALKING = 'WALKING',
+      BICYCLING = 'BICYCLING',
+      TRANSIT = 'TRANSIT'
+    }
+
+    class Geocoder {
+      geocode(request: GeocoderRequest, callback: (results: GeocoderResult[], status: GeocoderStatus) => void): void;
+    }
+
+    interface GeocoderRequest {
+      location?: LatLng | LatLngLiteral;
+    }
+
+    interface GeocoderResult {
+      formatted_address: string;
+    }
+
+    type GeocoderStatus = 'OK' | 'ZERO_RESULTS' | 'OVER_QUERY_LIMIT' | 'REQUEST_DENIED' | 'INVALID_REQUEST' | 'UNKNOWN_ERROR';
+
+    class LatLngBounds {
+      extend(point: LatLng | LatLngLiteral): void;
+      isEmpty(): boolean;
+    }
+
+    interface LatLng {
       lat(): number;
       lng(): number;
     }
@@ -24,122 +107,36 @@ declare namespace google {
       lng: number;
     }
 
-    class Marker {
-      constructor(options?: MarkerOptions);
-      setMap(map: Map | null): void;
-      setPosition(latlng: LatLng | LatLngLiteral): void;
+    interface MapMouseEvent {
+      latLng: LatLng | null;
     }
 
-    interface MarkerOptions {
-      position?: LatLng | LatLngLiteral;
-      map?: Map;
-      title?: string;
-    }
-
-    class DirectionsService {
-      route(request: DirectionsRequest, callback: (result: DirectionsResult, status: DirectionsStatus) => void): void;
-    }
-
-    class DirectionsRenderer {
-      constructor(options?: DirectionsRendererOptions);
-      setMap(map: Map | null): void;
-      setDirections(directions: DirectionsResult): void;
-    }
-
-    interface DirectionsRequest {
-      origin: string | LatLng | LatLngLiteral;
-      destination: string | LatLng | LatLngLiteral;
-      travelMode: TravelMode;
-    }
-
-    interface DirectionsResult {
-      routes: DirectionsRoute[];
-    }
-
-    interface DirectionsRoute {
-      legs: DirectionsLeg[];
-    }
-
-    interface DirectionsLeg {
-      distance: Distance;
-      duration: Duration;
-    }
-
-    interface Distance {
-      text: string;
-      value: number;
-    }
-
-    interface Duration {
-      text: string;
-      value: number;
-    }
-
-    interface DirectionsRendererOptions {
-      map?: Map;
-      suppressMarkers?: boolean;
-    }
-
-    enum DirectionsStatus {
-      OK = "OK",
-      NOT_FOUND = "NOT_FOUND",
-      ZERO_RESULTS = "ZERO_RESULTS",
-      MAX_WAYPOINTS_EXCEEDED = "MAX_WAYPOINTS_EXCEEDED",
-      INVALID_REQUEST = "INVALID_REQUEST",
-      OVER_QUERY_LIMIT = "OVER_QUERY_LIMIT",
-      REQUEST_DENIED = "REQUEST_DENIED",
-      UNKNOWN_ERROR = "UNKNOWN_ERROR"
-    }
-
-    enum TravelMode {
-      DRIVING = "DRIVING",
-      WALKING = "WALKING",
-      BICYCLING = "BICYCLING",
-      TRANSIT = "TRANSIT"
-    }
-
-    enum MapTypeId {
-      ROADMAP = "roadmap",
-      SATELLITE = "satellite",
-      HYBRID = "hybrid",
-      TERRAIN = "terrain"
+    namespace event {
+      function addListener(instance: object, eventName: string, handler: Function): void;
+      function removeListener(listener: any): void;
     }
 
     namespace places {
       class Autocomplete {
-        constructor(input: HTMLInputElement, options?: AutocompleteOptions);
-        addListener(eventName: string, handler: () => void): void;
+        constructor(inputField: HTMLInputElement, opts?: AutocompleteOptions);
+        addListener(eventName: string, handler: Function): void;
         getPlace(): PlaceResult;
       }
 
       interface AutocompleteOptions {
         types?: string[];
-        componentRestrictions?: ComponentRestrictions;
-      }
-
-      interface ComponentRestrictions {
-        country?: string | string[];
+        componentRestrictions?: { country: string };
       }
 
       interface PlaceResult {
+        geometry?: {
+          location?: LatLng;
+        };
         formatted_address?: string;
         name?: string;
-        geometry?: PlaceGeometry;
       }
-
-      interface PlaceGeometry {
-        location?: LatLng;
-      }
-    }
-
-    namespace event {
-      function clearInstanceListeners(instance: any): void;
     }
   }
 }
 
-declare global {
-  interface Window {
-    google?: typeof google;
-  }
-}
+export {};

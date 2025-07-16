@@ -32,7 +32,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     console.log('Setting up auth state listener');
     
-    // Set up auth state listener
+    // Set up auth state listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log('Auth state changed:', event, {
@@ -46,7 +46,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     );
 
-    // Get initial session
+    // Then get initial session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
         console.error('Error getting initial session:', error);
@@ -89,28 +89,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       console.log('Signup response:', { 
         user: data.user ? { id: data.user.id, email: data.user.email } : null,
-        session: data.session ? { access_token: data.session.access_token.substring(0, 20) + '...' } : null,
+        session: data.session ? 'Session created' : 'No session',
         error: error ? { message: error.message, status: error.status } : null
       });
 
       if (error) {
-        console.error('Signup error details:', {
-          message: error.message,
-          status: error.status,
-          name: error.name
-        });
+        console.error('Signup error details:', error);
         
         let errorMessage = error.message || 'Failed to create account';
         
-        // Handle specific error cases
         if (error.message?.includes('User already registered')) {
           errorMessage = 'An account with this email already exists. Please sign in instead.';
         } else if (error.message?.includes('Password')) {
           errorMessage = 'Password must be at least 6 characters long.';
         } else if (error.message?.includes('Email')) {
           errorMessage = 'Please enter a valid email address.';
-        } else if (error.message?.includes('Database error')) {
-          errorMessage = 'Database configuration issue. Please contact support.';
         }
         
         toast.error(errorMessage);
@@ -144,20 +137,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       console.log('Signin response:', { 
         user: data.user ? { id: data.user.id, email: data.user.email } : null,
-        session: data.session ? { access_token: data.session.access_token.substring(0, 20) + '...' } : null,
-        error: error ? { message: error.message, status: error.status } : null
+        session: data.session ? 'Session created' : 'No session',
+        error: error ? { message: error.message } : null
       });
 
       if (error) {
-        console.error('Signin error details:', {
-          message: error.message,
-          status: error.status,
-          name: error.name
-        });
+        console.error('Signin error:', error);
         
         let errorMessage = error.message || 'Failed to sign in';
         
-        // Handle specific error cases
         if (error.message?.includes('Invalid login credentials')) {
           errorMessage = 'Invalid email or password. Please check your credentials and try again.';
         } else if (error.message?.includes('Email not confirmed')) {

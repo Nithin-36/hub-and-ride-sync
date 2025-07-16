@@ -97,7 +97,12 @@ const GoogleMap: React.FC<GoogleMapProps> = ({
           // Reverse geocoding to get address
           const geocoder = new window.google.maps.Geocoder();
           try {
-            const response = await geocoder.geocode({ location: { lat, lng } });
+            const response = await new Promise<{ results: google.maps.GeocoderResult[], status: google.maps.GeocoderStatus }>((resolve) => {
+              geocoder.geocode({ location: { lat, lng } }, (results, status) => {
+                resolve({ results: results || [], status });
+              });
+            });
+            
             const address = response.results[0]?.formatted_address || `${lat}, ${lng}`;
             console.log('Geocoded address:', address);
             onLocationSelect({ lat, lng, address });
