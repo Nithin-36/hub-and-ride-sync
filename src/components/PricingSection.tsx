@@ -3,73 +3,126 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Users, MapPin, Clock, DollarSign, Calculator, Car } from "lucide-react";
+import { Users, MapPin, Clock, DollarSign, Calculator, Route } from "lucide-react";
 
 const PricingSection = () => {
   const [passengers, setPassengers] = useState(2);
-  const [totalFare] = useState(200);
-  
-  const farePerPassenger = Math.round(totalFare / passengers);
+  const [selectedRouteIndex, setSelectedRouteIndex] = useState(0);
 
-  const pricingPlans = [
+  const intercityRoutes = [
     {
-      title: "Basic Ride",
-      price: "₹15",
-      period: "per km",
-      description: "Standard ride-sharing experience",
-      features: [
-        "Shared rides with verified passengers",
-        "Basic route optimization",
-        "Standard customer support",
-        "Safe & secure payment",
-      ],
-      popular: false,
+      from: "Bangalore",
+      to: "Mumbai",
+      distance: 984,
+      pricePerKm: 8,
+      duration: "14-16 hours"
     },
     {
-      title: "Premium Ride",
-      price: "₹25",
-      period: "per km",
-      description: "Enhanced comfort and priority service",
-      features: [
-        "Priority matching with premium drivers",
-        "Luxury vehicle options",
-        "Real-time ride tracking",
-        "24/7 premium support",
-        "Split fare among passengers",
-        "Direct driver contact",
-      ],
-      popular: true,
+      from: "Delhi",
+      to: "Mumbai",
+      distance: 1424,
+      pricePerKm: 8,
+      duration: "20-22 hours"
     },
     {
-      title: "Private Driver",
-      price: "₹40",
-      period: "per km",
-      description: "Exclusive private driver service",
-      features: [
-        "Dedicated private driver",
-        "No ride sharing",
-        "Premium vehicle guarantee",
-        "Personalized service",
-        "Advanced booking options",
-        "VIP customer support",
-      ],
-      popular: false,
+      from: "Chennai",
+      to: "Bangalore",
+      distance: 346,
+      pricePerKm: 8,
+      duration: "5-6 hours"
     },
+    {
+      from: "Pune",
+      to: "Mumbai",
+      distance: 149,
+      pricePerKm: 8,
+      duration: "3-4 hours"
+    },
+    {
+      from: "Hyderabad",
+      to: "Bangalore",
+      distance: 569,
+      pricePerKm: 8,
+      duration: "8-10 hours"
+    },
+    {
+      from: "Kolkata",
+      to: "Delhi",
+      distance: 1472,
+      pricePerKm: 8,
+      duration: "21-23 hours"
+    }
   ];
+
+  const selectedRoute = intercityRoutes[selectedRouteIndex];
+  const totalFare = selectedRoute.distance * selectedRoute.pricePerKm;
+  const farePerPassenger = Math.round(totalFare / passengers);
 
   return (
     <section id="pricing" className="py-20 bg-muted/30">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold mb-4">
-            Simple & <span className="text-primary">Transparent Pricing</span>
+            Intercity <span className="text-primary">Travel Pricing</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Choose the perfect ride option for your needs with our competitive and transparent pricing structure.
+            Transparent intercity ride-sharing pricing at ₹8 per km. Share rides, share costs!
           </p>
         </div>
 
-        {/* Split Fare Feature Highlight */}
+        {/* Route Selection */}
+        <div className="max-w-4xl mx-auto mb-12">
+          <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
+            <CardHeader className="text-center">
+              <CardTitle className="flex items-center justify-center gap-2 text-xl">
+                <Route className="h-6 w-6 text-primary" />
+                Select Your Route
+              </CardTitle>
+              <p className="text-muted-foreground">
+                Choose your intercity destination and see instant pricing
+              </p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+                {intercityRoutes.map((route, index) => (
+                  <Button
+                    key={index}
+                    variant={selectedRouteIndex === index ? "default" : "outline"}
+                    onClick={() => setSelectedRouteIndex(index)}
+                    className="h-auto p-4 flex flex-col items-center gap-2"
+                  >
+                    <div className="font-semibold">{route.from} → {route.to}</div>
+                    <div className="text-sm opacity-80">{route.distance} km • {route.duration}</div>
+                  </Button>
+                ))}
+              </div>
+              
+              <div className="bg-card rounded-lg p-6 border">
+                <div className="text-center mb-4">
+                  <h3 className="text-xl font-semibold mb-2">
+                    {selectedRoute.from} to {selectedRoute.to}
+                  </h3>
+                  <div className="flex items-center justify-center gap-4 text-sm text-muted-foreground">
+                    <span>{selectedRoute.distance} km</span>
+                    <span>•</span>
+                    <span>{selectedRoute.duration}</span>
+                    <span>•</span>
+                    <span>₹{selectedRoute.pricePerKm}/km</span>
+                  </div>
+                </div>
+                
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-primary mb-2">
+                    ₹{totalFare}
+                  </div>
+                  <p className="text-sm text-muted-foreground">Base fare for the route</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Split Fare Feature */}
         <div className="max-w-4xl mx-auto mb-12">
           <Card className="bg-gradient-to-r from-primary/10 to-primary/5 border-primary/20">
             <CardHeader className="text-center">
@@ -104,6 +157,10 @@ const PricingSection = () => {
                     <Separator />
                     <div className="space-y-2">
                       <div className="flex justify-between">
+                        <span className="text-sm">Route:</span>
+                        <span className="font-semibold">{selectedRoute.from} → {selectedRoute.to}</span>
+                      </div>
+                      <div className="flex justify-between">
                         <span className="text-sm">Total Fare:</span>
                         <span className="font-semibold">₹{totalFare}</span>
                       </div>
@@ -133,52 +190,15 @@ const PricingSection = () => {
           </Card>
         </div>
 
-        {/* Pricing Cards */}
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-12">
-          {pricingPlans.map((plan, index) => (
-            <Card key={index} className={`relative ${plan.popular ? 'border-primary shadow-lg scale-105' : ''}`}>
-              {plan.popular && (
-                <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-primary">
-                  Most Popular
-                </Badge>
-              )}
-              <CardHeader className="text-center pb-4">
-                <CardTitle className="text-xl mb-2">{plan.title}</CardTitle>
-                <div className="flex items-center justify-center gap-1">
-                  <span className="text-3xl font-bold text-primary">{plan.price}</span>
-                  <span className="text-muted-foreground">{plan.period}</span>
-                </div>
-                <p className="text-sm text-muted-foreground mt-2">{plan.description}</p>
-              </CardHeader>
-              <CardContent className="pt-0">
-                <ul className="space-y-3">
-                  {plan.features.map((feature, featureIndex) => (
-                    <li key={featureIndex} className="flex items-center gap-3">
-                      <div className="h-2 w-2 bg-primary rounded-full flex-shrink-0" />
-                      <span className="text-sm">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-                <Button 
-                  className={`w-full mt-6 ${plan.popular ? '' : 'variant="outline"'}`}
-                  variant={plan.popular ? "default" : "outline"}
-                >
-                  Choose Plan
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-
         {/* Additional Features */}
         <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
           <div className="text-center">
             <div className="inline-flex items-center justify-center w-12 h-12 bg-primary/10 rounded-lg mb-4">
               <MapPin className="h-6 w-6 text-primary" />
             </div>
-            <h3 className="font-semibold mb-2">Dynamic Pricing</h3>
+            <h3 className="font-semibold mb-2">Distance-Based Pricing</h3>
             <p className="text-sm text-muted-foreground">
-              Fair pricing based on distance, time, and demand
+              Fair pricing at ₹8 per km for all intercity routes
             </p>
           </div>
           <div className="text-center">
