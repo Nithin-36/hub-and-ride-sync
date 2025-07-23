@@ -12,6 +12,8 @@ import BookRide from "./pages/BookRide";
 import RideHistory from "./pages/RideHistory";
 import RideTracking from "./pages/RideTracking";
 import PrivateDrivers from "./pages/PrivateDrivers";
+import OfferRide from "./pages/OfferRide";
+import RequestRide from "./pages/RequestRide";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +33,8 @@ const App = () => (
             <Route path="/ride-history" element={<RideHistory />} />
             <Route path="/ride-tracking" element={<RideTracking />} />
             <Route path="/private-drivers" element={<PrivateDrivers />} />
+            <Route path="/offer-ride" element={<OfferRide />} />
+            <Route path="/request-ride" element={<RequestRide />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>

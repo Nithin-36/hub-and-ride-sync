@@ -45,7 +45,7 @@ const Dashboard = () => {
               <Car className="h-6 w-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-bold">RideShareHub</h1>
+              <h1 className="text-xl font-bold">HopAlong</h1>
               <p className="text-sm text-muted-foreground">Welcome, {user.full_name}</p>
             </div>
           </div>
@@ -106,16 +106,16 @@ const Dashboard = () => {
         {/* Action Cards */}
         <div className="grid md:grid-cols-2 gap-6">
           {user.role === 'passenger' ? (
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/book-ride')}>
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/request-ride')}>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Plus className="h-5 w-5" />
-                  <span>Book a Ride</span>
+                  <span>Request a Ride</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">
-                  Find a driver and book your next ride
+                  Find a driver and request your next ride
                 </p>
                 <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                   <div className="flex items-center space-x-1">
@@ -130,21 +130,21 @@ const Dashboard = () => {
               </CardContent>
             </Card>
           ) : (
-            <Card className="cursor-pointer hover:shadow-lg transition-shadow">
+            <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/offer-ride')}>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Car className="h-5 w-5" />
-                  <span>Start Driving</span>
+                  <span>Offer a Ride</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground mb-4">
-                  Accept ride requests and start earning
+                  Offer rides to passengers and start earning
                 </p>
                 <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                   <div className="flex items-center space-x-1">
                     <MapPin className="h-4 w-4" />
-                    <span>Nearby requests</span>
+                    <span>Smart matching</span>
                   </div>
                   <div className="flex items-center space-x-1">
                     <Clock className="h-4 w-4" />

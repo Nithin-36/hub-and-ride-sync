@@ -1,5 +1,5 @@
 
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 interface User {
   id: string;
@@ -74,12 +74,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   // Check for saved user on component mount
-  useState(() => {
+  useEffect(() => {
     const savedUser = localStorage.getItem('mockUser');
     if (savedUser) {
       setUser(JSON.parse(savedUser));
     }
-  });
+  }, []);
 
   return (
     <AuthContext.Provider value={{ user, loading, signUp, signIn, signOut }}>
