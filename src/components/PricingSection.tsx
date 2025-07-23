@@ -14,42 +14,42 @@ const PricingSection = () => {
       from: "Bangalore",
       to: "Mumbai",
       distance: 984,
-      pricePerKm: 8,
+      pricePerKm: 4,
       duration: "14-16 hours"
     },
     {
       from: "Delhi",
       to: "Mumbai",
       distance: 1424,
-      pricePerKm: 8,
+      pricePerKm: 4,
       duration: "20-22 hours"
     },
     {
       from: "Chennai",
       to: "Bangalore",
       distance: 346,
-      pricePerKm: 8,
+      pricePerKm: 4,
       duration: "5-6 hours"
     },
     {
       from: "Pune",
       to: "Mumbai",
       distance: 149,
-      pricePerKm: 8,
+      pricePerKm: 4,
       duration: "3-4 hours"
     },
     {
       from: "Hyderabad",
       to: "Bangalore",
       distance: 569,
-      pricePerKm: 8,
+      pricePerKm: 4,
       duration: "8-10 hours"
     },
     {
       from: "Kolkata",
       to: "Delhi",
       distance: 1472,
-      pricePerKm: 8,
+      pricePerKm: 4,
       duration: "21-23 hours"
     }
   ];
@@ -66,7 +66,7 @@ const PricingSection = () => {
             Intercity <span className="text-primary">Travel Pricing</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Transparent intercity ride-sharing pricing at ₹8 per km. Share rides, share costs!
+            Transparent intercity ride-sharing pricing at ₹4 per km. Share rides, share costs!
           </p>
         </div>
 
@@ -198,7 +198,7 @@ const PricingSection = () => {
             </div>
             <h3 className="font-semibold mb-2">Distance-Based Pricing</h3>
             <p className="text-sm text-muted-foreground">
-              Fair pricing at ₹8 per km for all intercity routes
+              Fair pricing at ₹4 per km for all intercity routes
             </p>
           </div>
           <div className="text-center">

@@ -32,7 +32,7 @@ const Header = () => {
               <Car className="h-6 w-6 text-primary-foreground" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-primary">RideShareHub</h1>
+              <h1 className="text-xl font-bold text-primary">HopAlong</h1>
               <p className="text-xs text-muted-foreground">Smart Carpooling</p>
             </div>
           </div>

@@ -11,11 +11,11 @@ const HeroSection = () => {
       <div className="container mx-auto px-4 text-center">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-4xl md:text-6xl font-bold text-foreground mb-6">
-            Smart Carpooling for
-            <span className="text-primary"> Modern Cities</span>
+            HopAlong with 
+            <span className="text-primary"> Smart Matching</span>
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Connect with reliable drivers and passengers in your area. Save money, reduce traffic, and make new friends while commuting.
+            Advanced AI-powered matching connects you with the perfect ride partners. Accurate, fast, and reliable carpooling at ₹4/km.
           </p>
           
           {/* Action Cards */}
