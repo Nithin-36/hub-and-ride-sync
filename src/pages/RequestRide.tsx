@@ -6,9 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, MapPin, Clock, User, Phone, Shield, Car, IndianRupee } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, User, Phone, Shield, Car, IndianRupee, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 import GoogleMap from '@/components/GoogleMap';
+import PaymentComponent from '@/components/PaymentComponent';
 import { calculateCityDistance, calculateFare } from '@/utils/distanceCalculator';
 
 interface MatchedDriver {
@@ -37,6 +38,8 @@ const RequestRide = () => {
   const [otp, setOtp] = useState('');
   const [routeInfo, setRouteInfo] = useState<{distance: number; fare: number} | null>(null);
   const [showMap, setShowMap] = useState(false);
+  const [showPayment, setShowPayment] = useState(false);
+  const [selectedDriver, setSelectedDriver] = useState<MatchedDriver | null>(null);
 
   const generateMockDrivers = (): MatchedDriver[] => {
     const distance = routeInfo?.distance || calculateCityDistance(pickup, destination) || 50;
@@ -98,11 +101,17 @@ const RequestRide = () => {
   };
 
   const handleSelectDriver = (driver: MatchedDriver) => {
-    setSelectedMatch(driver);
+    setSelectedDriver(driver);
+    setShowPayment(true);
+  };
+
+  const handlePaymentSuccess = () => {
+    setSelectedMatch(selectedDriver);
+    setShowPayment(false);
     // Generate mock OTP
     const mockOtp = Math.floor(1000 + Math.random() * 9000).toString();
     setOtp(mockOtp);
-    toast.success(`Match confirmed! OTP: ${mockOtp}`);
+    toast.success(`Payment successful! OTP: ${mockOtp}`);
   };
 
   if (selectedMatch) {
@@ -162,7 +171,7 @@ const RequestRide = () => {
                 {selectedMatch.distance && selectedMatch.fare && (
                   <div className="flex items-center space-x-2">
                     <IndianRupee className="h-4 w-4 text-green-600" />
-                    <span className="text-sm">Distance: {selectedMatch.distance}km | Fare: ₹{selectedMatch.fare}</span>
+                    <span className="text-sm">Distance: {selectedMatch.distance}km | Per Person: ₹{Math.round(selectedMatch.fare / 4)}</span>
                   </div>
                 )}
               </div>
@@ -283,7 +292,25 @@ const RequestRide = () => {
           </div>
         )}
 
-        {matches.length > 0 && (
+        {showPayment && selectedDriver && routeInfo ? (
+          <div className="mb-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Complete Payment</h2>
+              <Button variant="outline" onClick={() => setShowPayment(false)}>
+                Back to Drivers
+              </Button>
+            </div>
+            <PaymentComponent
+              fare={routeInfo.fare}
+              passengers={4}
+              pickup={pickup}
+              destination={destination}
+              distance={routeInfo.distance}
+              duration="Estimated travel time"
+              onPaymentSuccess={handlePaymentSuccess}
+            />
+          </div>
+        ) : matches.length > 0 && (
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Matching Drivers</h2>
             {matches.map((driver) => (
@@ -326,7 +353,7 @@ const RequestRide = () => {
                       <div className="flex items-center space-x-2">
                         <IndianRupee className="h-4 w-4 text-green-600" />
                         <span className="text-sm font-medium">
-                          {driver.distance}km | ₹{driver.fare} total
+                          {driver.distance}km | ₹{Math.round(driver.fare / 4)} per person (4 passengers)
                         </span>
                       </div>
                     )}
@@ -336,7 +363,8 @@ const RequestRide = () => {
                     onClick={() => handleSelectDriver(driver)}
                     className="w-full"
                   >
-                    Select This Driver
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Select & Pay
                   </Button>
                 </CardContent>
               </Card>

@@ -170,9 +170,12 @@ const PricingSection = () => {
                       </div>
                       <Separator />
                       <div className="flex justify-between text-lg font-bold text-primary">
-                        <span>Fare per Passenger:</span>
+                        <span>Per Person Share:</span>
                         <span>₹{farePerPassenger}</span>
                       </div>
+                      <p className="text-xs text-center text-muted-foreground mt-2">
+                        Shared ride cost split among passengers
+                      </p>
                     </div>
                   </div>
                   <div className="text-center">
