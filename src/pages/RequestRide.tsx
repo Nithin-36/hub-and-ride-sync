@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, MapPin, Clock, User, Phone, Shield, Car, IndianRupee, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
-import LeafletMap from '@/components/LeafletMap';
+import SimpleMap from '@/components/SimpleMap';
 import PaymentComponent from '@/components/PaymentComponent';
 import { calculateCityDistance, calculateFare } from '@/utils/distanceCalculator';
 
@@ -278,7 +278,8 @@ const RequestRide = () => {
                 Back to Form
               </Button>
             </div>
-            <LeafletMap 
+            
+            <SimpleMap 
               pickup={pickup}
               destination={destination}
               onRouteSelect={(route) => {
@@ -286,7 +287,7 @@ const RequestRide = () => {
                 setDestination(route.destination);
                 setRouteInfo({ distance: route.distance, fare: route.fare });
                 setShowMap(false);
-                toast.success('Route selected! Ready to find drivers.');
+                toast.success('Route confirmed! Ready to find drivers.');
               }}
             />
           </div>
