@@ -40,14 +40,12 @@ interface LeafletMapProps {
   onRouteSelect: (route: { pickup: string; destination: string; distance: number; fare: number }) => void;
 }
 
-// Component to handle map clicks
+// Component to handle map actions
 const MapClickHandler = ({ onRouteSelect, pickup, destination }: { 
   onRouteSelect: (route: { pickup: string; destination: string; distance: number; fare: number }) => void;
   pickup: string;
   destination: string;
 }) => {
-  const map = useMap();
-
   const handleConfirmRoute = () => {
     if (pickup && destination) {
       const distance = calculateCityDistance(pickup, destination);
@@ -57,10 +55,12 @@ const MapClickHandler = ({ onRouteSelect, pickup, destination }: {
   };
 
   return (
-    <div className="absolute top-4 right-4 z-[1000]">
-      <Button onClick={handleConfirmRoute} size="sm">
-        Confirm Route
-      </Button>
+    <div className="leaflet-top leaflet-right">
+      <div className="leaflet-control leaflet-bar">
+        <Button onClick={handleConfirmRoute} size="sm" className="m-2">
+          Confirm Route
+        </Button>
+      </div>
     </div>
   );
 };
@@ -126,17 +126,25 @@ const LeafletMap = ({ pickup, destination, onRouteSelect }: LeafletMapProps) => 
               </Popup>
             </Marker>
           )}
-          
-          <MapClickHandler 
-            onRouteSelect={onRouteSelect}
-            pickup={pickup}
-            destination={destination}
-          />
         </MapContainer>
       </div>
       
       <div className="mt-4 p-4 bg-card rounded-lg border">
-        <h3 className="font-semibold mb-2">Route Information</h3>
+        <div className="flex justify-between items-center mb-2">
+          <h3 className="font-semibold">Route Information</h3>
+          <Button 
+            onClick={() => {
+              if (pickup && destination) {
+                const distance = calculateCityDistance(pickup, destination);
+                const fare = calculateFare(distance);
+                onRouteSelect({ pickup, destination, distance, fare });
+              }
+            }}
+            size="sm"
+          >
+            Confirm Route
+          </Button>
+        </div>
         <div className="space-y-1 text-sm">
           <p><span className="font-medium">Pickup:</span> {pickup || 'Not selected'}</p>
           <p><span className="font-medium">Destination:</span> {destination || 'Not selected'}</p>
