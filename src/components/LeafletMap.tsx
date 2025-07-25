@@ -1,33 +1,13 @@
-import { useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
 import { calculateCityDistance, calculateFare } from '@/utils/distanceCalculator';
-import { toast } from 'sonner';
 
-// Fix for default markers in Leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-// Custom pickup icon (green)
-const pickupIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-green.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-// Custom destination icon (red)
-const destinationIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+// Fix for default markers in Leaflet - using simple approach
+const icon = L.icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
+  shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
   iconSize: [25, 41],
   iconAnchor: [12, 41],
   popupAnchor: [1, -34],
@@ -39,31 +19,6 @@ interface LeafletMapProps {
   destination: string;
   onRouteSelect: (route: { pickup: string; destination: string; distance: number; fare: number }) => void;
 }
-
-// Component to handle map actions
-const MapClickHandler = ({ onRouteSelect, pickup, destination }: { 
-  onRouteSelect: (route: { pickup: string; destination: string; distance: number; fare: number }) => void;
-  pickup: string;
-  destination: string;
-}) => {
-  const handleConfirmRoute = () => {
-    if (pickup && destination) {
-      const distance = calculateCityDistance(pickup, destination);
-      const fare = calculateFare(distance);
-      onRouteSelect({ pickup, destination, distance, fare });
-    }
-  };
-
-  return (
-    <div className="leaflet-top leaflet-right">
-      <div className="leaflet-control leaflet-bar">
-        <Button onClick={handleConfirmRoute} size="sm" className="m-2">
-          Confirm Route
-        </Button>
-      </div>
-    </div>
-  );
-};
 
 const LeafletMap = ({ pickup, destination, onRouteSelect }: LeafletMapProps) => {
   // Default coordinates for major Indian cities
@@ -92,8 +47,16 @@ const LeafletMap = ({ pickup, destination, onRouteSelect }: LeafletMapProps) => 
   const centerLat = (pickupCoords[0] + destinationCoords[0]) / 2;
   const centerLng = (pickupCoords[1] + destinationCoords[1]) / 2;
 
+  const handleConfirmRoute = () => {
+    if (pickup && destination) {
+      const distance = calculateCityDistance(pickup, destination);
+      const fare = calculateFare(distance);
+      onRouteSelect({ pickup, destination, distance, fare });
+    }
+  };
+
   return (
-    <div className="relative">
+    <div className="space-y-4">
       <div className="h-[500px] w-full rounded-lg overflow-hidden border">
         <MapContainer
           center={[centerLat, centerLng]}
@@ -106,7 +69,7 @@ const LeafletMap = ({ pickup, destination, onRouteSelect }: LeafletMapProps) => 
           />
           
           {pickup && (
-            <Marker position={pickupCoords} icon={pickupIcon}>
+            <Marker position={pickupCoords} icon={icon}>
               <Popup>
                 <div className="text-center">
                   <strong>Pickup Location</strong><br />
@@ -117,7 +80,7 @@ const LeafletMap = ({ pickup, destination, onRouteSelect }: LeafletMapProps) => 
           )}
           
           {destination && (
-            <Marker position={destinationCoords} icon={destinationIcon}>
+            <Marker position={destinationCoords} icon={icon}>
               <Popup>
                 <div className="text-center">
                   <strong>Destination</strong><br />
@@ -129,17 +92,11 @@ const LeafletMap = ({ pickup, destination, onRouteSelect }: LeafletMapProps) => 
         </MapContainer>
       </div>
       
-      <div className="mt-4 p-4 bg-card rounded-lg border">
+      <div className="p-4 bg-card rounded-lg border">
         <div className="flex justify-between items-center mb-2">
           <h3 className="font-semibold">Route Information</h3>
           <Button 
-            onClick={() => {
-              if (pickup && destination) {
-                const distance = calculateCityDistance(pickup, destination);
-                const fare = calculateFare(distance);
-                onRouteSelect({ pickup, destination, distance, fare });
-              }
-            }}
+            onClick={handleConfirmRoute}
             size="sm"
           >
             Confirm Route
