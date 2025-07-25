@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, MapPin, Clock, User, Phone, Shield, Car, IndianRupee, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
-import GoogleMap from '@/components/GoogleMap';
+import LeafletMap from '@/components/LeafletMap';
 import PaymentComponent from '@/components/PaymentComponent';
 import { calculateCityDistance, calculateFare } from '@/utils/distanceCalculator';
 
@@ -258,7 +258,7 @@ const RequestRide = () => {
                   onClick={() => setShowMap(true)}
                   className="w-full"
                 >
-                  Use Google Maps
+                  Select Route on Map
                 </Button>
                 <Button 
                   onClick={handleRequestRide} 
@@ -278,7 +278,7 @@ const RequestRide = () => {
                 Back to Form
               </Button>
             </div>
-            <GoogleMap 
+            <LeafletMap 
               pickup={pickup}
               destination={destination}
               onRouteSelect={(route) => {
@@ -359,13 +359,22 @@ const RequestRide = () => {
                     )}
                   </div>
 
-                  <Button 
-                    onClick={() => handleSelectDriver(driver)}
-                    className="w-full"
-                  >
-                    <CreditCard className="h-4 w-4 mr-2" />
-                    Select & Pay
-                  </Button>
+                  <div className="grid grid-cols-2 gap-2">
+                    <Button 
+                      onClick={() => handleSelectDriver(driver)}
+                      className="w-full"
+                    >
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Select & Pay
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      onClick={() => navigate('/ride-tracking')}
+                      className="w-full"
+                    >
+                      Track Driver
+                    </Button>
+                  </div>
                 </CardContent>
               </Card>
             ))}
