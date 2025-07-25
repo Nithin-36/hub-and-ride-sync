@@ -1,5 +1,4 @@
-
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/MockAuthContext';
 import { Button } from '@/components/ui/button';
@@ -7,6 +6,37 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, Clock, Phone, Star } from 'lucide-react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+
+// Fix for default markers in Leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+});
+
+// Custom driver icon (blue)
+const driverIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
+
+// Custom passenger icon (red)
+const passengerIcon = new L.Icon({
+  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+  popupAnchor: [1, -34],
+  shadowSize: [41, 41]
+});
 
 interface MockBooking {
   id: string;
@@ -24,6 +54,11 @@ const RideTracking = () => {
   const [activeRide, setActiveRide] = useState<MockBooking | null>(null);
   const [progress, setProgress] = useState(25);
   const [loading, setLoading] = useState(true);
+  
+  // Driver position state - starts near Bangalore and moves towards passenger
+  const [driverPosition, setDriverPosition] = useState<[number, number]>([12.9716, 77.5946]);
+  const passengerPosition: [number, number] = [12.9716, 77.5946]; // Passenger at Bangalore center
+  const mapRef = useRef<L.Map | null>(null);
 
   useEffect(() => {
     if (!user) {
@@ -32,6 +67,20 @@ const RideTracking = () => {
     }
     fetchActiveRide();
   }, [user, navigate]);
+
+  // Simulate driver movement
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDriverPosition(prev => {
+        // Move driver slightly towards passenger (simulate movement)
+        const newLat = prev[0] + (Math.random() - 0.5) * 0.001;
+        const newLng = prev[1] + (Math.random() - 0.5) * 0.001;
+        return [newLat, newLng];
+      });
+    }, 3000); // Update every 3 seconds
+
+    return () => clearInterval(interval);
+  }, []);
 
   const fetchActiveRide = async () => {
     try {
@@ -120,11 +169,58 @@ const RideTracking = () => {
           <Button variant="ghost" size="icon" onClick={() => navigate('/dashboard')}>
             <ArrowLeft className="h-5 w-5" />
           </Button>
-          <h1 className="text-xl font-bold">Track Ride</h1>
+          <h1 className="text-xl font-bold">Live Driver Tracking</h1>
         </div>
       </header>
 
       <div className="container mx-auto p-6 space-y-6">
+        {/* Real-time Map */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Live Driver Tracking</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div id="map" className="h-[500px] w-full rounded-lg overflow-hidden">
+              <MapContainer
+                center={[12.9716, 77.5946]} // Bangalore coordinates
+                zoom={13}
+                style={{ height: '100%', width: '100%' }}
+                ref={mapRef}
+              >
+                {/* OpenStreetMap tiles */}
+                <TileLayer
+                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                />
+                
+                {/* Driver marker with real-time position updates */}
+                <Marker position={driverPosition} icon={driverIcon}>
+                  <Popup>
+                    <div className="text-center">
+                      <strong>Driver: Nithin</strong><br />
+                      <span className="text-sm text-muted-foreground">
+                        On the way to pickup
+                      </span>
+                    </div>
+                  </Popup>
+                </Marker>
+                
+                {/* Passenger marker */}
+                <Marker position={passengerPosition} icon={passengerIcon}>
+                  <Popup>
+                    <div className="text-center">
+                      <strong>Passenger: Veda</strong><br />
+                      <span className="text-sm text-muted-foreground">
+                        Waiting for pickup
+                      </span>
+                    </div>
+                  </Popup>
+                </Marker>
+              </MapContainer>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Status Card */}
         <Card>
           <CardContent className="pt-6">
@@ -200,10 +296,10 @@ const RideTracking = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-3">
                   <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center">
-                    <span className="text-primary-foreground font-bold">JD</span>
+                    <span className="text-primary-foreground font-bold">N</span>
                   </div>
                   <div>
-                    <p className="font-medium">John Doe</p>
+                    <p className="font-medium">Nithin</p>
                     <div className="flex items-center space-x-1">
                       <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                       <span className="text-sm">4.8</span>
