@@ -370,7 +370,29 @@ const RequestRide = () => {
                     </Button>
                     <Button 
                       variant="outline"
-                      onClick={() => navigate('/ride-tracking')}
+                      onClick={() => {
+                        // Create mock ride data for tracking
+                        const mockRide = {
+                          id: `RIDE${Date.now()}`,
+                          pickupAddress: pickup,
+                          destinationAddress: destination,
+                          pickupTime: new Date().toISOString(),
+                          estimatedPrice: Math.round(driver.fare! / 4),
+                          status: 'matched',
+                          createdAt: new Date().toISOString(),
+                          driverId: driver.id,
+                          driverName: driver.name,
+                          driverPhone: driver.phone
+                        };
+                        
+                        // Store for tracking
+                        const existingBookings = JSON.parse(localStorage.getItem('mockBookings') || '[]');
+                        existingBookings.push(mockRide);
+                        localStorage.setItem('mockBookings', JSON.stringify(existingBookings));
+                        
+                        navigate('/ride-tracking');
+                        toast.success('Tracking ride...');
+                      }}
                       className="w-full"
                     >
                       Track Driver

@@ -29,19 +29,58 @@ const PaymentComponent: React.FC<PaymentComponentProps> = ({
   const [paymentStatus, setPaymentStatus] = useState<'pending' | 'success' | 'failed'>('pending');
 
   const perPersonFare = Math.round(fare / passengers);
-  const platformFee = Math.round(fare * 0.05); // 5% platform fee
+  const platformFee = Math.round(fare * 0.15); // 15% platform fee
   const totalAmount = fare + platformFee;
   const perPersonTotal = Math.round(totalAmount / passengers);
 
   const handlePayment = async () => {
     setIsProcessing(true);
     try {
-      // Simulate payment processing
+      // Simulate payment processing with detailed breakdown
       await new Promise(resolve => setTimeout(resolve, 2000));
       
-      // Mock successful payment
+      // Calculate actual payment distribution
+      const driverEarnings = Math.round(fare * 0.85); // 85% to driver
+      const platformFee = Math.round(fare * 0.15); // 15% to platform
+      
+      // Store payment details in localStorage for ride tracking
+      const paymentDetails = {
+        totalAmount,
+        driverEarnings,
+        platformFee,
+        passengers,
+        perPersonAmount: perPersonTotal,
+        pickup,
+        destination,
+        distance,
+        duration,
+        paymentTime: new Date().toISOString(),
+        transactionId: `TXN${Date.now()}`,
+        status: 'paid'
+      };
+      
+      // Store in localStorage for ride tracking
+      localStorage.setItem('lastPayment', JSON.stringify(paymentDetails));
+      
+      // Mock ride booking data
+      const rideBooking = {
+        id: `RIDE${Date.now()}`,
+        pickupAddress: pickup,
+        destinationAddress: destination,
+        pickupTime: new Date().toISOString(),
+        estimatedPrice: perPersonTotal,
+        status: 'matched',
+        createdAt: new Date().toISOString(),
+        paymentId: paymentDetails.transactionId
+      };
+      
+      // Store booking for ride tracking
+      const existingBookings = JSON.parse(localStorage.getItem('mockBookings') || '[]');
+      existingBookings.push(rideBooking);
+      localStorage.setItem('mockBookings', JSON.stringify(existingBookings));
+      
       setPaymentStatus('success');
-      toast.success('Payment successful! Ride booked.');
+      toast.success(`Payment successful! ₹${driverEarnings} to driver, ₹${platformFee} platform fee.`);
       onPaymentSuccess?.();
     } catch (error) {
       setPaymentStatus('failed');
@@ -64,6 +103,12 @@ const PaymentComponent: React.FC<PaymentComponentProps> = ({
             <Badge variant="secondary" className="bg-green-100 text-green-800">
               Booking Confirmed
             </Badge>
+            <Button 
+              onClick={() => window.location.href = '/ride-tracking'}
+              className="w-full mt-4"
+            >
+              Track Your Ride
+            </Button>
           </div>
         </CardContent>
       </Card>
@@ -115,8 +160,12 @@ const PaymentComponent: React.FC<PaymentComponentProps> = ({
             <span>₹{fare}</span>
           </div>
           <div className="flex justify-between text-sm text-muted-foreground">
-            <span>Platform Fee (5%)</span>
-            <span>₹{platformFee}</span>
+            <span>Platform Fee (15%)</span>
+            <span>₹{Math.round(fare * 0.15)}</span>
+          </div>
+          <div className="flex justify-between text-sm text-green-600">
+            <span>Driver Earnings (85%)</span>
+            <span>₹{Math.round(fare * 0.85)}</span>
           </div>
           <Separator />
           <div className="flex justify-between font-semibold">
