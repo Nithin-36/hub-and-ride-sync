@@ -71,6 +71,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
     
+    // Handle demo credentials
+    const isDemoPassenger = data.email === 'demo-passenger@example.com' && data.password === 'password123';
+    const isDemoDriver = data.email === 'demo-driver@example.com' && data.password === 'password123';
+    
+    if (isDemoPassenger) {
+      const demoUser: User = {
+        id: 'demo-passenger-id',
+        email: data.email,
+        full_name: 'Demo Passenger',
+        role: 'passenger'
+      };
+      setUser(demoUser);
+      localStorage.setItem('mockUser', JSON.stringify(demoUser));
+      setLoading(false);
+      return { error: null };
+    }
+    
+    if (isDemoDriver) {
+      const demoUser: User = {
+        id: 'demo-driver-id',
+        email: data.email,
+        full_name: 'Demo Driver',
+        role: 'driver',
+        phone: '+91 98765 43210',
+        vehicle_details: 'Demo Vehicle - KA01DM1234'
+      };
+      setUser(demoUser);
+      localStorage.setItem('mockUser', JSON.stringify(demoUser));
+      setLoading(false);
+      return { error: null };
+    }
+    
     // Check if user exists in localStorage
     const savedUser = localStorage.getItem('mockUser');
     if (savedUser) {
@@ -83,7 +115,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
     
     setLoading(false);
-    return { error: { message: 'User not found. Please sign up first.' } };
+    return { error: { message: 'User not found. Please sign up first or use demo credentials.' } };
   };
 
   const signOut = async () => {

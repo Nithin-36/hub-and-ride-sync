@@ -104,7 +104,11 @@ const PaymentComponent: React.FC<PaymentComponentProps> = ({
               Booking Confirmed
             </Badge>
             <Button 
-              onClick={() => window.location.href = '/ride-tracking'}
+              onClick={() => {
+                // Use proper React Router navigation
+                const event = new CustomEvent('payment-success-navigate');
+                window.dispatchEvent(event);
+              }}
               className="w-full mt-4"
             >
               Track Your Ride

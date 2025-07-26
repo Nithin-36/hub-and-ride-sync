@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/MockAuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -133,7 +133,25 @@ const RequestRide = () => {
     const mockOtp = Math.floor(1000 + Math.random() * 9000).toString();
     setOtp(mockOtp);
     toast.success(`Payment successful! OTP: ${mockOtp}`);
+    
+    // Navigate to ride tracking after a short delay
+    setTimeout(() => {
+      navigate('/ride-tracking');
+    }, 2000);
   };
+
+  // Listen for payment success navigation event
+  useEffect(() => {
+    const handlePaymentNavigation = () => {
+      navigate('/ride-tracking');
+    };
+    
+    window.addEventListener('payment-success-navigate', handlePaymentNavigation);
+    
+    return () => {
+      window.removeEventListener('payment-success-navigate', handlePaymentNavigation);
+    };
+  }, [navigate]);
 
   if (selectedMatch) {
     return (

@@ -1,5 +1,5 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/MockAuthContext';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Car, Users } from 'lucide-react';
+import { Car, Users, Info } from 'lucide-react';
 import { toast } from 'sonner';
+import { createDemoData, getDemoCredentials } from '@/utils/demoData';
 
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
@@ -23,6 +24,21 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const { signUp, signIn } = useAuth();
   const navigate = useNavigate();
+
+  // Initialize demo data on component mount
+  useEffect(() => {
+    createDemoData();
+  }, []);
+
+  const fillDemoCredentials = (type: 'passenger' | 'driver') => {
+    const credentials = getDemoCredentials();
+    const cred = credentials[type];
+    
+    setEmail(cred.email);
+    setPassword(cred.password);
+    setIsLogin(true);
+    toast.info(`Demo ${type} credentials filled. Click Sign In to continue.`);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,7 +62,6 @@ const Auth = () => {
           toast.error(errorMsg);
           return;
         }
-
         
         if (role === 'driver' && !phone.trim()) {
           const errorMsg = 'Phone number is required for drivers';
@@ -211,6 +226,34 @@ const Auth = () => {
             >
               {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
             </Button>
+
+            {/* Demo Credentials Section */}
+            <div className="border-t pt-4 space-y-2">
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
+                <Info className="h-4 w-4" />
+                <span>Demo Credentials (For Presentation)</span>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fillDemoCredentials('passenger')}
+                  className="text-xs"
+                >
+                  Demo Passenger
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fillDemoCredentials('driver')}
+                  className="text-xs"
+                >
+                  Demo Driver
+                </Button>
+              </div>
+            </div>
           </form>
         </CardContent>
       </Card>
