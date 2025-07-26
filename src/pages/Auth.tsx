@@ -16,6 +16,8 @@ const Auth = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fullName, setFullName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [vehicleDetails, setVehicleDetails] = useState('');
   const [role, setRole] = useState<'driver' | 'passenger'>('passenger');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -45,6 +47,14 @@ const Auth = () => {
           return;
         }
 
+        
+        if (role === 'driver' && !phone.trim()) {
+          const errorMsg = 'Phone number is required for drivers';
+          setError(errorMsg);
+          toast.error(errorMsg);
+          return;
+        }
+
         if (password.length < 6) {
           const errorMsg = 'Password must be at least 6 characters long';
           setError(errorMsg);
@@ -52,7 +62,7 @@ const Auth = () => {
           return;
         }
 
-        const { error } = await signUp({ email, password, fullName, role });
+        const { error } = await signUp({ email, password, fullName, role, phone, vehicleDetails });
         if (error) {
           setError(error.message || 'Signup failed');
           toast.error(error.message || 'Signup failed');
@@ -73,6 +83,8 @@ const Auth = () => {
     setIsLogin(!isLogin);
     setError('');
     setFullName('');
+    setPhone('');
+    setVehicleDetails('');
     setEmail('');
     setPassword('');
   };
@@ -133,25 +145,52 @@ const Auth = () => {
             </div>
 
             {!isLogin && (
-              <div className="space-y-3">
-                <Label>Choose your role</Label>
-                <RadioGroup value={role} onValueChange={(value: 'driver' | 'passenger') => setRole(value)}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="passenger" id="passenger" />
-                    <Label htmlFor="passenger" className="flex items-center space-x-2 cursor-pointer">
-                      <Users className="h-4 w-4" />
-                      <span>Passenger - Find rides</span>
-                    </Label>
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    required={!isLogin && role === 'driver'}
+                    placeholder="Enter your phone number"
+                  />
+                </div>
+
+                {role === 'driver' && (
+                  <div className="space-y-2">
+                    <Label htmlFor="vehicleDetails">Vehicle Details (Optional)</Label>
+                    <Input
+                      id="vehicleDetails"
+                      type="text"
+                      value={vehicleDetails}
+                      onChange={(e) => setVehicleDetails(e.target.value)}
+                      placeholder="e.g., Honda City - KA01AB1234"
+                    />
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="driver" id="driver" />
-                    <Label htmlFor="driver" className="flex items-center space-x-2 cursor-pointer">
-                      <Car className="h-4 w-4" />
-                      <span>Driver - Offer rides</span>
-                    </Label>
-                  </div>
-                </RadioGroup>
-              </div>
+                )}
+
+                <div className="space-y-3">
+                  <Label>Choose your role</Label>
+                  <RadioGroup value={role} onValueChange={(value: 'driver' | 'passenger') => setRole(value)}>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="passenger" id="passenger" />
+                      <Label htmlFor="passenger" className="flex items-center space-x-2 cursor-pointer">
+                        <Users className="h-4 w-4" />
+                        <span>Passenger - Find rides</span>
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="driver" id="driver" />
+                      <Label htmlFor="driver" className="flex items-center space-x-2 cursor-pointer">
+                        <Car className="h-4 w-4" />
+                        <span>Driver - Offer rides (Phone required)</span>
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+              </>
             )}
 
             {error && (

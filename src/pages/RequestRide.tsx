@@ -45,6 +45,27 @@ const RequestRide = () => {
     const distance = routeInfo?.distance || calculateCityDistance(pickup, destination) || 50;
     const fare = routeInfo?.fare || calculateFare(distance);
     
+    // Get registered drivers from localStorage
+    const registeredDrivers = JSON.parse(localStorage.getItem('registeredDrivers') || '[]');
+    
+    // If we have registered drivers, use them; otherwise use mock data
+    if (registeredDrivers.length > 0) {
+      return registeredDrivers.slice(0, 2).map((driver: any, index: number) => ({
+        id: driver.id,
+        name: driver.name,
+        phone: driver.phone,
+        pickup: pickup || 'Mumbai Central',
+        destination: destination || 'Pune Station',
+        time: index === 0 ? '09:00 AM' : '09:15 AM',
+        vehicle: driver.vehicle,
+        rating: 4.8 - (index * 0.2),
+        compatibility: 95 - (index * 8),
+        distance,
+        fare
+      }));
+    }
+    
+    // Fallback to mock drivers if no registered drivers
     return [
       {
         id: '1',

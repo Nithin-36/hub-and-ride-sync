@@ -6,12 +6,14 @@ interface User {
   email: string;
   full_name: string;
   role: 'driver' | 'passenger';
+  phone?: string;
+  vehicle_details?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signUp: (data: { email: string; password: string; fullName: string; role: 'driver' | 'passenger' }) => Promise<{ error?: any }>;
+  signUp: (data: { email: string; password: string; fullName: string; role: 'driver' | 'passenger'; phone?: string; vehicleDetails?: string }) => Promise<{ error?: any }>;
   signIn: (data: { email: string; password: string }) => Promise<{ error?: any }>;
   signOut: () => Promise<void>;
 }
@@ -30,7 +32,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const signUp = async (data: { email: string; password: string; fullName: string; role: 'driver' | 'passenger' }) => {
+  const signUp = async (data: { email: string; password: string; fullName: string; role: 'driver' | 'passenger'; phone?: string; vehicleDetails?: string }) => {
     setLoading(true);
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 1000));
@@ -39,11 +41,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       id: Math.random().toString(36).substr(2, 9),
       email: data.email,
       full_name: data.fullName,
-      role: data.role
+      role: data.role,
+      phone: data.phone,
+      vehicle_details: data.vehicleDetails
     };
     
     setUser(newUser);
     localStorage.setItem('mockUser', JSON.stringify(newUser));
+    
+    // Store driver info separately for ride matching
+    if (data.role === 'driver' && data.phone) {
+      const drivers = JSON.parse(localStorage.getItem('registeredDrivers') || '[]');
+      drivers.push({
+        id: newUser.id,
+        name: data.fullName,
+        phone: data.phone,
+        vehicle: data.vehicleDetails || 'Vehicle details not provided',
+        email: data.email
+      });
+      localStorage.setItem('registeredDrivers', JSON.stringify(drivers));
+    }
+    
     setLoading(false);
     return { error: null };
   };

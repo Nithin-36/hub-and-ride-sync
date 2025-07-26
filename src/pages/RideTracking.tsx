@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { ArrowLeft, Clock, Phone, Star, MapPin, Navigation } from 'lucide-react';
+import { toast } from 'sonner';
 
 
 interface MockBooking {
@@ -66,6 +67,13 @@ const RideTracking = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Get driver phone from the active ride data
+  const getDriverPhone = () => {
+    const bookings = JSON.parse(localStorage.getItem('mockBookings') || '[]');
+    const latestBooking = bookings[bookings.length - 1];
+    return latestBooking?.driverPhone || '+91 99887 76543'; // fallback to default
   };
 
   const getStatusMessage = (status: string) => {
@@ -266,11 +274,21 @@ const RideTracking = () => {
                       <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
                       <span className="text-sm">4.8</span>
                     </div>
+                    <p className="text-sm text-muted-foreground">{getDriverPhone()}</p>
                   </div>
                 </div>
-                <Button size="sm" variant="outline">
+                <Button 
+                  size="sm" 
+                  variant="outline"
+                  onClick={() => {
+                    const phoneNumber = getDriverPhone().replace(/\s+/g, '');
+                    // Try to open phone app
+                    window.location.href = `tel:${phoneNumber}`;
+                    toast.success(`Calling ${phoneNumber}...`);
+                  }}
+                >
                   <Phone className="h-4 w-4 mr-2" />
-                  Call
+                  Call Driver
                 </Button>
               </div>
             </CardContent>
