@@ -1,42 +1,12 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/context/MockAuthContext';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Clock, Phone, Star } from 'lucide-react';
-import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+import { ArrowLeft, Clock, Phone, Star, MapPin, Navigation } from 'lucide-react';
 
-// Fix for default markers in Leaflet
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
-
-// Custom driver icon (blue)
-const driverIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
-
-// Custom passenger icon (red)
-const passengerIcon = new L.Icon({
-  iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
-  popupAnchor: [1, -34],
-  shadowSize: [41, 41]
-});
 
 interface MockBooking {
   id: string;
@@ -55,10 +25,9 @@ const RideTracking = () => {
   const [progress, setProgress] = useState(25);
   const [loading, setLoading] = useState(true);
   
-  // Driver position state - starts near Bangalore and moves towards passenger
-  const [driverPosition, setDriverPosition] = useState<[number, number]>([12.9716, 77.5946]);
-  const passengerPosition: [number, number] = [12.9716, 77.5946]; // Passenger at Bangalore center
-  const mapRef = useRef<L.Map | null>(null);
+  // Driver position state - simulate movement
+  const [driverETA, setDriverETA] = useState(8);
+  const [driverDistance, setDriverDistance] = useState(2.3);
 
   useEffect(() => {
     if (!user) {
@@ -71,12 +40,8 @@ const RideTracking = () => {
   // Simulate driver movement
   useEffect(() => {
     const interval = setInterval(() => {
-      setDriverPosition(prev => {
-        // Move driver slightly towards passenger (simulate movement)
-        const newLat = prev[0] + (Math.random() - 0.5) * 0.001;
-        const newLng = prev[1] + (Math.random() - 0.5) * 0.001;
-        return [newLat, newLng];
-      });
+      setDriverETA(prev => Math.max(1, prev - 0.2));
+      setDriverDistance(prev => Math.max(0.1, prev - 0.05));
     }, 3000); // Update every 3 seconds
 
     return () => clearInterval(interval);
@@ -174,49 +139,46 @@ const RideTracking = () => {
       </header>
 
       <div className="container mx-auto p-6 space-y-6">
-        {/* Real-time Map */}
+        {/* Live Tracking Dashboard */}
         <Card>
           <CardHeader>
-            <CardTitle>Live Driver Tracking</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Navigation className="h-5 w-5 text-primary" />
+              Live Driver Tracking
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div id="map" className="h-[500px] w-full rounded-lg overflow-hidden">
-              <MapContainer
-                center={[12.9716, 77.5946]} // Bangalore coordinates
-                zoom={13}
-                style={{ height: '100%', width: '100%' }}
-                ref={mapRef}
-              >
-                {/* OpenStreetMap tiles */}
-                <TileLayer
-                  attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-                  url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                />
-                
-                {/* Driver marker with real-time position updates */}
-                <Marker position={driverPosition} icon={driverIcon}>
-                  <Popup>
-                    <div className="text-center">
-                      <strong>Driver: Nithin</strong><br />
-                      <span className="text-sm text-muted-foreground">
-                        On the way to pickup
-                      </span>
+            <div className="bg-gradient-to-br from-primary/10 to-secondary/10 rounded-lg p-6 space-y-4">
+              {/* Driver Status */}
+              <div className="text-center space-y-2">
+                <div className="flex items-center justify-center gap-2">
+                  <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
+                  <span className="font-medium">Driver is on the way</span>
+                </div>
+                <p className="text-2xl font-bold text-primary">ETA: {Math.round(driverETA)} minutes</p>
+                <p className="text-muted-foreground">{driverDistance.toFixed(1)} km away</p>
+              </div>
+              
+              {/* Interactive Map Placeholder */}
+              <div className="bg-card border border-border rounded-lg p-8 text-center space-y-4">
+                <MapPin className="h-12 w-12 text-primary mx-auto" />
+                <div>
+                  <h3 className="font-semibold mb-2">Live Map View</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Track your driver's location in real-time
+                  </p>
+                  <div className="grid grid-cols-2 gap-4 max-w-md mx-auto">
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                      <span>Driver Location</span>
                     </div>
-                  </Popup>
-                </Marker>
-                
-                {/* Passenger marker */}
-                <Marker position={passengerPosition} icon={passengerIcon}>
-                  <Popup>
-                    <div className="text-center">
-                      <strong>Passenger: Veda</strong><br />
-                      <span className="text-sm text-muted-foreground">
-                        Waiting for pickup
-                      </span>
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                      <span>Your Location</span>
                     </div>
-                  </Popup>
-                </Marker>
-              </MapContainer>
+                  </div>
+                </div>
+              </div>
             </div>
           </CardContent>
         </Card>
