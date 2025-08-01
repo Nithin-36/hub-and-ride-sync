@@ -75,9 +75,14 @@ export const findCity = (cityName: string) => {
   return null;
 };
 
-// Calculate fare based on distance (₹4 per km)
+// Calculate fare based on distance (₹4/km up to 50km, then ₹9/km)
 export const calculateFare = (distance: number): number => {
-  return distance * 4;
+  if (distance <= 50) {
+    return distance * 4;
+  } else {
+    // First 50km at ₹4/km + remaining distance at ₹9/km
+    return (50 * 4) + ((distance - 50) * 9);
+  }
 };
 
 // Get popular intercity routes
