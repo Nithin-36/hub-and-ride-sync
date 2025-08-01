@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Users, MapPin, Clock, DollarSign, Calculator, Route } from "lucide-react";
+import { calculateFare } from "@/utils/distanceCalculator";
 
 const PricingSection = () => {
   const [passengers, setPassengers] = useState(2);
@@ -55,7 +56,7 @@ const PricingSection = () => {
   ];
 
   const selectedRoute = intercityRoutes[selectedRouteIndex];
-  const totalFare = selectedRoute.distance * selectedRoute.pricePerKm;
+  const totalFare = calculateFare(selectedRoute.distance);
   const farePerPassenger = Math.round(totalFare / passengers);
 
   return (
@@ -66,7 +67,7 @@ const PricingSection = () => {
             Intercity <span className="text-primary">Travel Pricing</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Transparent intercity ride-sharing pricing at ₹4 per km. Share rides, share costs!
+            Transparent intercity ride-sharing pricing at ₹4/km up to 50km, then ₹9/km. Share rides, share costs!
           </p>
         </div>
 
@@ -107,7 +108,7 @@ const PricingSection = () => {
                     <span>•</span>
                     <span>{selectedRoute.duration}</span>
                     <span>•</span>
-                    <span>₹{selectedRoute.pricePerKm}/km</span>
+                    <span>₹4/km (up to 50km), ₹9/km after</span>
                   </div>
                 </div>
                 
@@ -201,7 +202,7 @@ const PricingSection = () => {
             </div>
             <h3 className="font-semibold mb-2">Distance-Based Pricing</h3>
             <p className="text-sm text-muted-foreground">
-              Fair pricing at ₹4 per km for all intercity routes
+              Fair pricing at ₹4/km up to 50km, then ₹9/km for intercity routes
             </p>
           </div>
           <div className="text-center">

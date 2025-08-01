@@ -160,7 +160,7 @@ const PaymentComponent: React.FC<PaymentComponentProps> = ({
         {/* Pricing Breakdown */}
         <div className="space-y-3">
           <div className="flex justify-between">
-            <span>Base Fare (₹4/km)</span>
+            <span>Base Fare ({distance <= 50 ? '₹4/km' : '₹4/km up to 50km, ₹9/km after'})</span>
             <span>₹{fare}</span>
           </div>
           <div className="flex justify-between text-sm text-muted-foreground">
