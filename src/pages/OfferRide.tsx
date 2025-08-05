@@ -96,7 +96,8 @@ const OfferRide = () => {
     navigate("/ride-confirmation", {
       state: {
         passenger,
-        routeInfo
+        routeInfo,
+        passengers: 4 // Default for ride sharing
       }
     });
   };

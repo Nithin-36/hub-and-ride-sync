@@ -8,8 +8,9 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { ArrowLeft, Clock, IndianRupee, MapPin } from 'lucide-react';
+import { ArrowLeft, Clock, IndianRupee, MapPin, Users } from 'lucide-react';
 import { toast } from 'sonner';
+import { calculateFare } from '@/utils/distanceCalculator';
 
 const BookRide = () => {
   const { user } = useAuth();
@@ -17,8 +18,10 @@ const BookRide = () => {
   const [pickupAddress, setPickupAddress] = useState('');
   const [destinationAddress, setDestinationAddress] = useState('');
   const [pickupTime, setPickupTime] = useState('');
-  const [estimatedDistance] = useState(15); // km
-  const [estimatedPrice] = useState(120); // ₹8 per km
+  const [passengers, setPassengers] = useState(1);
+  const [estimatedDistance] = useState(75); // km (example showing both pricing tiers)
+  const estimatedPrice = calculateFare(estimatedDistance);
+  const pricePerPassenger = Math.round(estimatedPrice / passengers);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -41,7 +44,10 @@ const BookRide = () => {
         pickupAddress,
         destinationAddress,
         pickupTime,
+        passengers,
+        estimatedDistance,
         estimatedPrice,
+        pricePerPassenger,
         status: 'pending',
         createdAt: new Date().toISOString()
       };
@@ -120,21 +126,57 @@ const BookRide = () => {
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="passengers">Number of Passengers</Label>
+              <div className="relative">
+                <Users className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="passengers"
+                  type="number"
+                  min="1"
+                  max="4"
+                  value={passengers}
+                  onChange={(e) => setPassengers(Math.max(1, Math.min(4, parseInt(e.target.value) || 1)))}
+                  className="pl-10"
+                />
+              </div>
+              <p className="text-xs text-muted-foreground">Maximum 4 passengers per ride</p>
+            </div>
+
             {/* Price Estimate */}
             {pickupAddress && destinationAddress && (
               <Card className="bg-primary/5 border-primary/20">
                 <CardContent className="pt-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold">Estimated Fare</h3>
-                      <p className="text-sm text-muted-foreground">
-                        {estimatedDistance} km × ₹8/km
-                      </p>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h3 className="font-semibold">Total Fare</h3>
+                        <p className="text-sm text-muted-foreground">
+                          {estimatedDistance} km • {estimatedDistance <= 50 ? '₹4/km' : '₹4/km up to 50km, ₹9/km after'}
+                        </p>
+                      </div>
+                      <div className="flex items-center text-2xl font-bold text-primary">
+                        <IndianRupee className="h-6 w-6" />
+                        {estimatedPrice}
+                      </div>
                     </div>
-                    <div className="flex items-center text-2xl font-bold text-primary">
-                      <IndianRupee className="h-6 w-6" />
-                      {estimatedPrice}
-                    </div>
+                    
+                    {passengers > 1 && (
+                      <div className="border-t pt-3">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium">Per Passenger</h4>
+                            <p className="text-sm text-muted-foreground">
+                              Split among {passengers} passengers
+                            </p>
+                          </div>
+                          <div className="flex items-center text-lg font-semibold text-green-600">
+                            <IndianRupee className="h-5 w-5" />
+                            {pricePerPassenger}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

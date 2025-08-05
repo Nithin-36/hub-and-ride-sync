@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, MapPin, Clock, User, Phone, Shield, Car, IndianRupee, CreditCard } from 'lucide-react';
+import { ArrowLeft, MapPin, Clock, User, Phone, Shield, Car, IndianRupee, CreditCard, Users } from 'lucide-react';
 import { toast } from 'sonner';
 import SimpleMap from '@/components/SimpleMap';
 import PaymentComponent from '@/components/PaymentComponent';
@@ -32,6 +32,7 @@ const RequestRide = () => {
   const [pickup, setPickup] = useState('');
   const [destination, setDestination] = useState('');
   const [time, setTime] = useState('');
+  const [passengers, setPassengers] = useState(4); // Default to 4 passengers for ride sharing
   const [isSearching, setIsSearching] = useState(false);
   const [matches, setMatches] = useState<MatchedDriver[]>([]);
   const [selectedMatch, setSelectedMatch] = useState<MatchedDriver | null>(null);
@@ -210,7 +211,7 @@ const RequestRide = () => {
                 {selectedMatch.distance && selectedMatch.fare && (
                   <div className="flex items-center space-x-2">
                     <IndianRupee className="h-4 w-4 text-green-600" />
-                    <span className="text-sm">Distance: {selectedMatch.distance}km | Per Person: ₹{Math.round(selectedMatch.fare / 4)}</span>
+                    <span className="text-sm">Distance: {selectedMatch.distance}km | Per Person: ₹{Math.round(selectedMatch.fare / passengers)}</span>
                   </div>
                 )}
               </div>
@@ -277,6 +278,23 @@ const RequestRide = () => {
                 />
               </div>
 
+              <div>
+                <Label htmlFor="passengers">Number of Passengers</Label>
+                <div className="relative">
+                  <Users className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="passengers"
+                    type="number"
+                    min="1"
+                    max="4"
+                    value={passengers}
+                    onChange={(e) => setPassengers(Math.max(1, Math.min(4, parseInt(e.target.value) || 1)))}
+                    className="pl-10"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Maximum 4 passengers per ride</p>
+              </div>
+
               {routeInfo && (
                 <div className="bg-primary/10 rounded-lg p-4">
                   <div className="flex justify-between items-center">
@@ -286,8 +304,16 @@ const RequestRide = () => {
                     </span>
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Based on ₹4 per kilometer intercity rate
+                    {routeInfo.distance <= 50 ? '₹4/km' : '₹4/km up to 50km, ₹9/km after'}
                   </p>
+                  {passengers > 1 && (
+                    <div className="mt-2 pt-2 border-t border-primary/20">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm">Per Passenger ({passengers} total):</span>
+                        <span className="font-semibold text-green-600">₹{Math.round(routeInfo.fare / passengers)}</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -342,7 +368,7 @@ const RequestRide = () => {
             </div>
             <PaymentComponent
               fare={routeInfo.fare}
-              passengers={4}
+              passengers={passengers}
               pickup={pickup}
               destination={destination}
               distance={routeInfo.distance}
@@ -393,7 +419,7 @@ const RequestRide = () => {
                       <div className="flex items-center space-x-2">
                         <IndianRupee className="h-4 w-4 text-green-600" />
                         <span className="text-sm font-medium">
-                          {driver.distance}km | ₹{Math.round(driver.fare / 4)} per person (4 passengers)
+                          {driver.distance}km | ₹{Math.round(driver.fare / Math.min(passengers || 1, 4))} per person ({Math.min(passengers || 1, 4)} passengers)
                         </span>
                       </div>
                     )}
@@ -416,7 +442,7 @@ const RequestRide = () => {
                           pickupAddress: pickup,
                           destinationAddress: destination,
                           pickupTime: new Date().toISOString(),
-                          estimatedPrice: Math.round(driver.fare! / 4),
+                          estimatedPrice: Math.round(driver.fare! / passengers),
                           status: 'matched',
                           createdAt: new Date().toISOString(),
                           driverId: driver.id,

@@ -24,6 +24,7 @@ interface LocationState {
     distance: number;
     fare: number;
   };
+  passengers?: number;
 }
 
 const RideConfirmation = () => {
@@ -49,7 +50,7 @@ const RideConfirmation = () => {
     return null;
   }
 
-  const { passenger, routeInfo } = state;
+  const { passenger, routeInfo, passengers = 4 } = state;
 
   const handleStartRide = () => {
     toast.success("Ride started successfully!");
@@ -164,8 +165,16 @@ const RideConfirmation = () => {
                 <span className="text-lg font-bold text-primary">₹{routeInfo.fare}</span>
               </div>
               <p className="text-sm text-muted-foreground mt-1">
-                Distance: {routeInfo.distance} km
+                Distance: {routeInfo.distance} km • {routeInfo.distance <= 50 ? '₹4/km' : '₹4/km up to 50km, ₹9/km after'}
               </p>
+              {passengers > 1 && (
+                <div className="mt-2 pt-2 border-t border-secondary/30">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm">Per Passenger ({passengers} total):</span>
+                    <span className="font-semibold text-green-600">₹{Math.round(routeInfo.fare / passengers)}</span>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
