@@ -92,11 +92,13 @@ const OfferRide = () => {
   };
 
   const handleSelectPassenger = (passenger: MatchedPassenger) => {
-    setSelectedMatch(passenger);
-    // Generate mock OTP
-    const mockOtp = Math.floor(1000 + Math.random() * 9000).toString();
-    setOtp(mockOtp);
-    toast.success(`Match confirmed! OTP: ${mockOtp}`);
+    // Navigate to confirmation page with passenger details
+    navigate("/ride-confirmation", {
+      state: {
+        passenger,
+        routeInfo
+      }
+    });
   };
 
   if (selectedMatch) {

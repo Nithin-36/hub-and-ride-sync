@@ -14,6 +14,7 @@ import RideTracking from "./pages/RideTracking";
 import PrivateDrivers from "./pages/PrivateDrivers";
 import OfferRide from "./pages/OfferRide";
 import RequestRide from "./pages/RequestRide";
+import RideConfirmation from "./pages/RideConfirmation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/private-drivers" element={<PrivateDrivers />} />
             <Route path="/offer-ride" element={<OfferRide />} />
             <Route path="/request-ride" element={<RequestRide />} />
+            <Route path="/ride-confirmation" element={<RideConfirmation />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
