@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/context/MockAuthContext';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,14 +11,36 @@ import { Car, MapPin, Clock, Star, History, Plus } from 'lucide-react';
 const Dashboard = () => {
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!user) {
       navigate('/auth');
-      return;
+    } else {
+      fetchProfile();
     }
   }, [user, navigate]);
+
+  const fetchProfile = async () => {
+    if (!user) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+        
+      if (error) {
+        console.error('Error fetching profile:', error);
+      } else {
+        setProfile(data);
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+    }
+  };
 
   const handleSignOut = async () => {
     await signOut();
@@ -46,12 +69,12 @@ const Dashboard = () => {
             </div>
             <div>
               <h1 className="text-xl font-bold">HopAlong</h1>
-              <p className="text-sm text-muted-foreground">Welcome, {user.full_name}</p>
+              <p className="text-sm text-muted-foreground">Welcome, {user.user_metadata?.full_name || profile?.full_name || 'User'}</p>
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <Badge variant={user.role === 'driver' ? 'default' : 'secondary'}>
-              {user.role}
+            <Badge variant={(user.user_metadata?.role || profile?.role) === 'driver' ? 'default' : 'secondary'}>
+              {user.user_metadata?.role || profile?.role || 'passenger'}
             </Badge>
             <Button variant="outline" onClick={handleSignOut}>
               Sign Out
@@ -84,7 +107,7 @@ const Dashboard = () => {
             <CardContent>
               <div className="text-2xl font-bold">0</div>
               <p className="text-xs text-muted-foreground">
-                {user.role === 'driver' ? 'Rides provided' : 'Rides taken'}
+                {(user.user_metadata?.role || profile?.role) === 'driver' ? 'Rides provided' : 'Rides taken'}
               </p>
             </CardContent>
           </Card>
@@ -105,7 +128,7 @@ const Dashboard = () => {
 
         {/* Action Cards */}
         <div className="grid md:grid-cols-2 gap-6">
-          {user.role === 'passenger' ? (
+          {(user.user_metadata?.role || profile?.role) === 'passenger' ? (
             <Card className="cursor-pointer hover:shadow-lg transition-shadow" onClick={() => navigate('/request-ride')}>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">

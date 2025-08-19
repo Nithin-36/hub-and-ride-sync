@@ -1,7 +1,8 @@
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/MockAuthContext';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -35,32 +36,61 @@ const BookRide = () => {
     setError('');
 
     try {
-      // Simulate booking process
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Store booking in localStorage for demo purposes
-      const booking = {
-        id: Math.random().toString(36).substr(2, 9),
-        pickupAddress,
-        destinationAddress,
-        pickupTime,
-        passengers,
-        estimatedDistance,
-        estimatedPrice,
-        pricePerPassenger,
-        status: 'pending',
-        createdAt: new Date().toISOString()
-      };
-      
-      const existingBookings = JSON.parse(localStorage.getItem('mockBookings') || '[]');
-      existingBookings.push(booking);
-      localStorage.setItem('mockBookings', JSON.stringify(existingBookings));
-      
+      // Create ride request in Supabase
+      const { data: rideRequest, error } = await supabase
+        .from('ride_requests')
+        .insert({
+          passenger_id: user.id,
+          pickup_location: {
+            address: pickupAddress,
+            coordinates: { lat: 0, lng: 0 } // Add real coordinates if needed
+          },
+          destination_location: {
+            address: destinationAddress,
+            coordinates: { lat: 0, lng: 0 } // Add real coordinates if needed
+          },
+          pickup_time: pickupTime,
+          max_price: estimatedPrice,
+          status: 'active'
+        })
+        .select()
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      // Create ride record
+      const { data: ride, error: rideError } = await supabase
+        .from('rides')
+        .insert({
+          passenger_id: user.id,
+          pickup_location: {
+            address: pickupAddress,
+            coordinates: { lat: 0, lng: 0 }
+          },
+          destination_location: {
+            address: destinationAddress,
+            coordinates: { lat: 0, lng: 0 }
+          },
+          pickup_time: pickupTime,
+          estimated_distance: estimatedDistance,
+          estimated_price: estimatedPrice,
+          status: 'pending'
+        })
+        .select()
+        .single();
+
+      if (rideError) {
+        throw rideError;
+      }
+
       toast.success('Ride booked successfully!');
       navigate('/ride-tracking');
     } catch (error: any) {
       setError('Failed to book ride. Please try again.');
       toast.error('Failed to book ride. Please try again.');
+      console.error('Booking error:', error);
     } finally {
       setLoading(false);
     }

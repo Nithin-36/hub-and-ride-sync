@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/MockAuthContext';
+import { useAuth } from '@/context/AuthContext';
+import { useRides } from '@/hooks/useRides';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -9,20 +10,10 @@ import { ArrowLeft, Clock, Phone, Star, MapPin, Navigation } from 'lucide-react'
 import { toast } from 'sonner';
 
 
-interface MockBooking {
-  id: string;
-  pickupAddress: string;
-  destinationAddress: string;
-  pickupTime: string;
-  estimatedPrice: number;
-  status: string;
-  createdAt: string;
-}
-
 const RideTracking = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [activeRide, setActiveRide] = useState<MockBooking | null>(null);
+  const { getActiveRide, loading: ridesLoading } = useRides();
   const [progress, setProgress] = useState(25);
   const [loading, setLoading] = useState(true);
   
@@ -30,13 +21,15 @@ const RideTracking = () => {
   const [driverETA, setDriverETA] = useState(8);
   const [driverDistance, setDriverDistance] = useState(2.3);
 
+  const activeRide = getActiveRide();
+
   useEffect(() => {
     if (!user) {
       navigate('/auth');
       return;
     }
-    fetchActiveRide();
-  }, [user, navigate]);
+    setLoading(ridesLoading);
+  }, [user, navigate, ridesLoading]);
 
   // Simulate driver movement
   useEffect(() => {
@@ -48,32 +41,18 @@ const RideTracking = () => {
     return () => clearInterval(interval);
   }, []);
 
-  const fetchActiveRide = async () => {
-    try {
-      // Get bookings from localStorage
-      const bookings: MockBooking[] = JSON.parse(localStorage.getItem('mockBookings') || '[]');
-      const latestBooking = bookings[bookings.length - 1];
-      
-      if (latestBooking) {
-        setActiveRide(latestBooking);
-        setProgress(25);
-        
-        // Simulate ride progression
-        setTimeout(() => setProgress(50), 2000);
-        setTimeout(() => setProgress(75), 4000);
-      }
-    } catch (error) {
-      console.error('Error fetching active ride:', error);
-    } finally {
-      setLoading(false);
+  // Simulate ride progression when activeRide is available
+  useEffect(() => {
+    if (activeRide) {
+      setProgress(25);
+      setTimeout(() => setProgress(50), 2000);
+      setTimeout(() => setProgress(75), 4000);
     }
-  };
+  }, [activeRide]);
 
-  // Get driver phone from the active ride data
+  // Get driver phone - fallback for now
   const getDriverPhone = () => {
-    const bookings = JSON.parse(localStorage.getItem('mockBookings') || '[]');
-    const latestBooking = bookings[bookings.length - 1];
-    return latestBooking?.driverPhone || '+91 99887 76543'; // fallback to default
+    return '+91 99887 76543'; // fallback to default
   };
 
   const getStatusMessage = (status: string) => {
@@ -222,18 +201,18 @@ const RideTracking = () => {
             <div className="space-y-3">
               <div className="flex items-start space-x-3">
                 <div className="w-3 h-3 bg-green-500 rounded-full mt-1.5"></div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Pickup</p>
-                  <p className="font-medium">{activeRide.pickupAddress}</p>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Pickup</p>
+                    <p className="font-medium">{activeRide.pickup_location.address}</p>
+                  </div>
                 </div>
-              </div>
-              <div className="border-l-2 border-dashed border-muted ml-1.5 h-6"></div>
-              <div className="flex items-start space-x-3">
-                <div className="w-3 h-3 bg-red-500 rounded-full mt-1.5"></div>
-                <div>
-                  <p className="text-sm text-muted-foreground">Destination</p>
-                  <p className="font-medium">{activeRide.destinationAddress}</p>
-                </div>
+                <div className="border-l-2 border-dashed border-muted ml-1.5 h-6"></div>
+                <div className="flex items-start space-x-3">
+                  <div className="w-3 h-3 bg-red-500 rounded-full mt-1.5"></div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Destination</p>
+                    <p className="font-medium">{activeRide.destination_location.address}</p>
+                  </div>
               </div>
             </div>
 
@@ -242,14 +221,14 @@ const RideTracking = () => {
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">
-                    {new Date(activeRide.pickupTime).toLocaleTimeString('en-IN', {
+                    {new Date(activeRide.pickup_time).toLocaleTimeString('en-IN', {
                       hour: '2-digit',
                       minute: '2-digit'
                     })}
                   </span>
                 </div>
                 <div className="text-lg font-bold">
-                  ₹{activeRide.estimatedPrice}
+                  ₹{activeRide.estimated_price}
                 </div>
               </div>
             </div>

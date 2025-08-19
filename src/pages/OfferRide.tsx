@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { useAuth } from '@/context/MockAuthContext';
+import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,34 +37,46 @@ const OfferRide = () => {
   const [routeInfo, setRouteInfo] = useState<{distance: number; fare: number} | null>(null);
   const [showMap, setShowMap] = useState(false);
 
-  const generateMockPassengers = (): MatchedPassenger[] => {
-    const distance = routeInfo?.distance || calculateCityDistance(pickup, destination) || 50;
-    const fare = routeInfo?.fare || calculateFare(distance);
-    
-    return [
-      {
-        id: '1',
-        name: 'Veda Kumar',
-        phone: '+91 98765 43210',
-        pickup: pickup || 'Mumbai Central',
-        destination: destination || 'Pune Station',
-        time: '09:00 AM',
-        compatibility: 95,
-        distance,
-        fare
-      },
-      {
-        id: '2',
-        name: 'Raj Patel',
-        phone: '+91 87654 32109',
-        pickup: pickup || 'Delhi Railway Station',
-        destination: destination || 'Jaipur Bus Stand',
-        time: '09:15 AM',
-        compatibility: 87,
-        distance,
-        fare
+  const fetchMatchingPassengers = async (): Promise<MatchedPassenger[]> => {
+    try {
+      // Fetch active ride requests from Supabase
+      const { data: rideRequests, error } = await supabase
+        .from('ride_requests')
+        .select(`
+          *,
+          profiles!ride_requests_passenger_id_fkey(full_name, phone)
+        `)
+        .eq('status', 'active')
+        .gte('expires_at', new Date().toISOString());
+
+      if (error) {
+        console.error('Error fetching ride requests:', error);
+        return [];
       }
-    ];
+
+      const distance = routeInfo?.distance || calculateCityDistance(pickup, destination) || 50;
+      const fare = routeInfo?.fare || calculateFare(distance);
+
+      // Transform data to match interface
+      return rideRequests.map((request, index) => ({
+        id: request.id,
+        name: request.profiles?.full_name || 'Unknown Passenger',
+        phone: request.profiles?.phone || 'No phone',
+        pickup: request.pickup_location?.address || pickup,
+        destination: request.destination_location?.address || destination,
+        time: new Date(request.pickup_time).toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: true 
+        }),
+        compatibility: Math.floor(Math.random() * 20) + 80, // Random compatibility score
+        distance,
+        fare
+      }));
+    } catch (error) {
+      console.error('Error in fetchMatchingPassengers:', error);
+      return [];
+    }
   };
 
   const handleOfferRide = async () => {
@@ -82,13 +95,17 @@ const OfferRide = () => {
       }
     }
     
-    // Simulate API call
-    setTimeout(() => {
-      const mockPassengers = generateMockPassengers();
-      setMatches(mockPassengers);
+    // Fetch real passengers from Supabase
+    try {
+      const passengers = await fetchMatchingPassengers();
+      setMatches(passengers);
       setIsSearching(false);
-      toast.success(`Found ${mockPassengers.length} matching passengers!`);
-    }, 2000);
+      toast.success(`Found ${passengers.length} matching passengers!`);
+    } catch (error) {
+      console.error('Error fetching passengers:', error);
+      setIsSearching(false);
+      toast.error('Failed to find passengers. Please try again.');
+    }
   };
 
   const handleSelectPassenger = (passenger: MatchedPassenger) => {
@@ -124,7 +141,7 @@ const OfferRide = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium">Driver (You)</Label>
-                  <p className="text-lg">{user?.full_name}</p>
+                  <p className="text-lg">{user?.user_metadata?.full_name || 'Driver'}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Passenger</Label>

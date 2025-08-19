@@ -1,47 +1,24 @@
 
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/MockAuthContext';
+import { useAuth } from '@/context/AuthContext';
+import { useRides } from '@/hooks/useRides';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ArrowLeft, Clock, IndianRupee, Star } from 'lucide-react';
 
-interface MockBooking {
-  id: string;
-  pickupAddress: string;
-  destinationAddress: string;
-  pickupTime: string;
-  estimatedPrice: number;
-  status: string;
-  createdAt: string;
-}
-
 const RideHistory = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [rides, setRides] = useState<MockBooking[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { rides, loading, error } = useRides();
 
   useEffect(() => {
     if (!user) {
       navigate('/auth');
       return;
     }
-    fetchRideHistory();
   }, [user, navigate]);
-
-  const fetchRideHistory = async () => {
-    try {
-      // Get bookings from localStorage
-      const bookings: MockBooking[] = JSON.parse(localStorage.getItem('mockBookings') || '[]');
-      setRides(bookings.reverse()); // Show newest first
-    } catch (error) {
-      console.error('Error fetching ride history:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -75,7 +52,20 @@ const RideHistory = () => {
       </header>
 
       <div className="container mx-auto p-6">
-        {rides.length === 0 ? (
+        {loading ? (
+          <div className="flex justify-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+          </div>
+        ) : error ? (
+          <Card>
+            <CardContent className="pt-6 text-center">
+              <p className="text-destructive mb-4">Error loading ride history: {error}</p>
+              <Button onClick={() => window.location.reload()}>
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
+        ) : rides.length === 0 ? (
           <Card>
             <CardContent className="pt-6 text-center">
               <div className="text-6xl mb-4">🚗</div>
@@ -95,7 +85,7 @@ const RideHistory = () => {
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-base">
-                      {new Date(ride.pickupTime).toLocaleDateString('en-IN', {
+                      {new Date(ride.pickup_time).toLocaleDateString('en-IN', {
                         weekday: 'long',
                         year: 'numeric',
                         month: 'long',
@@ -116,14 +106,14 @@ const RideHistory = () => {
                       <div className="w-2 h-2 bg-green-500 rounded-full mt-2"></div>
                       <div>
                         <p className="text-sm text-muted-foreground">Pickup</p>
-                        <p className="font-medium">{ride.pickupAddress}</p>
+                        <p className="font-medium">{ride.pickup_location.address}</p>
                       </div>
                     </div>
                     <div className="flex items-start space-x-2">
                       <div className="w-2 h-2 bg-red-500 rounded-full mt-2"></div>
                       <div>
                         <p className="text-sm text-muted-foreground">Destination</p>
-                        <p className="font-medium">{ride.destinationAddress}</p>
+                        <p className="font-medium">{ride.destination_location.address}</p>
                       </div>
                     </div>
                   </div>
@@ -133,20 +123,22 @@ const RideHistory = () => {
                       <div className="flex items-center space-x-1">
                         <Clock className="h-4 w-4" />
                         <span>
-                          {new Date(ride.pickupTime).toLocaleTimeString('en-IN', {
+                          {new Date(ride.pickup_time).toLocaleTimeString('en-IN', {
                             hour: '2-digit',
                             minute: '2-digit'
                           })}
                         </span>
                       </div>
-                      <div className="flex items-center space-x-1">
-                        <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                        <span>5.0/5</span>
-                      </div>
+                      {ride.passenger_rating && (
+                        <div className="flex items-center space-x-1">
+                          <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                          <span>{ride.passenger_rating}/5</span>
+                        </div>
+                      )}
                     </div>
                     <div className="flex items-center text-lg font-bold">
                       <IndianRupee className="h-4 w-4" />
-                      {ride.estimatedPrice}
+                      {ride.estimated_price || ride.actual_price || 0}
                     </div>
                   </div>
                 </CardContent>
