@@ -39,13 +39,10 @@ const OfferRide = () => {
 
   const fetchMatchingPassengers = async (): Promise<MatchedPassenger[]> => {
     try {
-      // Fetch active ride requests from Supabase
+      // Fetch active ride requests from Supabase (no join to profiles to avoid FK dependency)
       const { data: rideRequests, error } = await supabase
         .from('ride_requests')
-        .select(`
-          *,
-          profiles!ride_requests_passenger_id_fkey(full_name, phone)
-        `)
+        .select('*')
         .eq('status', 'active')
         .gte('expires_at', new Date().toISOString());
 
@@ -58,10 +55,10 @@ const OfferRide = () => {
       const fare = routeInfo?.fare || calculateFare(distance);
 
       // Transform data to match interface
-      return rideRequests.map((request, index) => ({
+      return (rideRequests || []).map((request: any) => ({
         id: request.id,
-        name: request.profiles?.full_name || 'Unknown Passenger',
-        phone: request.profiles?.phone || 'No phone',
+        name: 'Passenger',
+        phone: 'N/A',
         pickup: request.pickup_location?.address || pickup,
         destination: request.destination_location?.address || destination,
         time: new Date(request.pickup_time).toLocaleTimeString('en-US', { 
@@ -69,7 +66,7 @@ const OfferRide = () => {
           minute: '2-digit',
           hour12: true 
         }),
-        compatibility: Math.floor(Math.random() * 20) + 80, // Random compatibility score
+        compatibility: Math.floor(Math.random() * 20) + 80,
         distance,
         fare
       }));

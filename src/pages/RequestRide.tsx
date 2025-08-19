@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useAuth } from '@/context/MockAuthContext';
+import { useAuth } from '@/context/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -176,7 +176,7 @@ const RequestRide = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium">Passenger (You)</Label>
-                  <p className="text-lg">{user?.full_name}</p>
+                  <p className="text-lg">{user?.user_metadata?.full_name || 'Passenger'}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Driver</Label>
