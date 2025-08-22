@@ -138,7 +138,7 @@ const OfferRide = () => {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium">Driver (You)</Label>
-                  <p className="text-lg">{user?.user_metadata?.full_name || 'Driver'}</p>
+                  <p className="text-lg">{user?.full_name || 'Driver'}</p>
                 </div>
                 <div>
                   <Label className="text-sm font-medium">Passenger</Label>
