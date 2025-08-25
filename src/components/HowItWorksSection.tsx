@@ -1,41 +1,31 @@
-
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Search, HandHeart, CreditCard } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
 const HowItWorksSection = () => {
   const navigate = useNavigate();
-
-  const steps = [
-    {
-      icon: UserPlus,
-      title: "Sign Up",
-      description: "Create your profile and choose whether you want to be a driver, passenger, or both",
-      details: "Quick registration with verification for safety"
-    },
-    {
-      icon: Search,
-      title: "Find Matches",
-      description: "Our smart algorithm finds the perfect ride matches based on your route and preferences",
-      details: "Real-time matching with compatibility scoring"
-    },
-    {
-      icon: HandHeart,
-      title: "Connect & Ride",
-      description: "Connect with your matches, share ride details, and enjoy your journey together",
-      details: "In-app messaging and live tracking"
-    },
-    {
-      icon: CreditCard,
-      title: "Pay & Rate",
-      description: "Secure payment processing and community rating system for continuous improvement",
-      details: "Multiple payment options and fair pricing"
-    }
-  ];
-
-  return (
-    <section id="how-it-works" className="py-20">
+  const steps = [{
+    icon: UserPlus,
+    title: "Sign Up",
+    description: "Create your profile and choose whether you want to be a driver, passenger, or both",
+    details: "Quick registration with verification for safety"
+  }, {
+    icon: Search,
+    title: "Find Matches",
+    description: "Our smart algorithm finds the perfect ride matches based on your route and preferences",
+    details: "Real-time matching with compatibility scoring"
+  }, {
+    icon: HandHeart,
+    title: "Connect & Ride",
+    description: "Connect with your matches, share ride details, and enjoy your journey together",
+    details: "In-app messaging and live tracking"
+  }, {
+    icon: CreditCard,
+    title: "Pay & Rate",
+    description: "Secure payment processing and community rating system for continuous improvement",
+    details: "Multiple payment options and fair pricing"
+  }];
+  return <section id="how-it-works" className="py-20">
       <div className="container mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-3xl lg:text-4xl font-bold mb-4">
@@ -47,12 +37,9 @@ const HowItWorksSection = () => {
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 mb-16">
-          {steps.map((step, index) => (
-            <div key={index} className="relative">
+          {steps.map((step, index) => <div key={index} className="relative">
               {/* Connector Line */}
-              {index < steps.length - 1 && (
-                <div className="hidden lg:block absolute top-12 left-full w-full h-0.5 bg-gradient-to-r from-primary/50 to-transparent z-0" />
-              )}
+              {index < steps.length - 1 && <div className="hidden lg:block absolute top-12 left-full w-full h-0.5 bg-gradient-to-r from-primary/50 to-transparent z-0" />}
               
               <Card className="relative z-10 p-6 text-center hover:shadow-lg transition-all duration-300 hover:scale-105 bg-card/80 backdrop-blur border-primary/10">
                 <div className="bg-primary/10 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -67,8 +54,7 @@ const HowItWorksSection = () => {
                 <p className="text-muted-foreground mb-3">{step.description}</p>
                 <p className="text-sm text-primary font-medium">{step.details}</p>
               </Card>
-            </div>
-          ))}
+            </div>)}
         </div>
 
         {/* Driver vs Passenger */}
@@ -132,14 +118,12 @@ const HowItWorksSection = () => {
               </div>
             </div>
             
-            <Button variant="outline" className="w-full border-primary text-primary hover:bg-primary hover:text-primary-foreground" onClick={() => navigate('/auth')}>
+            <Button variant="outline" onClick={() => navigate('/auth')} className="w-full border-primary text-primary hover:text-primary-foreground text-base bg-green-700 hover:bg-green-600">
               Find Rides
             </Button>
           </Card>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default HowItWorksSection;
