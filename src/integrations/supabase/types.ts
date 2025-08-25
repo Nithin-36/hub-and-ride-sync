@@ -69,12 +69,14 @@ export type Database = {
         Row: {
           completed_at: string | null
           created_at: string
+          destination: string | null
           destination_location: Json
           distance_km: number | null
           driver_id: string
           feedback: string | null
           id: string
           passenger_id: string | null
+          pick_up: string | null
           pickup_location: Json
           pickup_time: string
           price: number | null
@@ -85,12 +87,14 @@ export type Database = {
         Insert: {
           completed_at?: string | null
           created_at?: string
+          destination?: string | null
           destination_location: Json
           distance_km?: number | null
           driver_id: string
           feedback?: string | null
           id?: string
           passenger_id?: string | null
+          pick_up?: string | null
           pickup_location: Json
           pickup_time: string
           price?: number | null
@@ -101,12 +105,14 @@ export type Database = {
         Update: {
           completed_at?: string | null
           created_at?: string
+          destination?: string | null
           destination_location?: Json
           distance_km?: number | null
           driver_id?: string
           feedback?: string | null
           id?: string
           passenger_id?: string | null
+          pick_up?: string | null
           pickup_location?: Json
           pickup_time?: string
           price?: number | null

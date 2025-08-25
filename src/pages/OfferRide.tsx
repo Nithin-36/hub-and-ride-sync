@@ -6,186 +6,76 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, MapPin, Clock, User, Phone, Shield, IndianRupee } from 'lucide-react';
+import { ArrowLeft, MapPin, Save } from 'lucide-react';
 import { toast } from 'sonner';
 import GoogleMap from '@/components/GoogleMap';
 import { calculateCityDistance, calculateFare } from '@/utils/distanceCalculator';
-
-interface MatchedPassenger {
-  id: string;
-  name: string;
-  phone: string;
-  pickup: string;
-  destination: string;
-  time: string;
-  compatibility: number;
-  distance?: number;
-  fare?: number;
-}
 
 const OfferRide = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [pickup, setPickup] = useState('');
   const [destination, setDestination] = useState('');
-  const [time, setTime] = useState('');
-  const [isSearching, setIsSearching] = useState(false);
-  const [matches, setMatches] = useState<MatchedPassenger[]>([]);
-  const [selectedMatch, setSelectedMatch] = useState<MatchedPassenger | null>(null);
-  const [otp, setOtp] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
   const [routeInfo, setRouteInfo] = useState<{distance: number; fare: number} | null>(null);
   const [showMap, setShowMap] = useState(false);
 
-  const fetchMatchingPassengers = async (): Promise<MatchedPassenger[]> => {
-    try {
-      // Fetch active ride requests from Supabase (no join to profiles to avoid FK dependency)
-      const { data: rideRequests, error } = await supabase
-        .from('ride_requests')
-        .select('*')
-        .eq('status', 'active')
-        .gte('expires_at', new Date().toISOString());
-
-      if (error) {
-        console.error('Error fetching ride requests:', error);
-        return [];
-      }
-
-      const distance = routeInfo?.distance || calculateCityDistance(pickup, destination) || 50;
-      const fare = routeInfo?.fare || calculateFare(distance);
-
-      // Transform data to match interface
-      return (rideRequests || []).map((request: any) => ({
-        id: request.id,
-        name: 'Passenger',
-        phone: 'N/A',
-        pickup: request.pickup_location?.address || pickup,
-        destination: request.destination_location?.address || destination,
-        time: new Date(request.pickup_time).toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          hour12: true 
-        }),
-        compatibility: Math.floor(Math.random() * 20) + 80,
-        distance,
-        fare
-      }));
-    } catch (error) {
-      console.error('Error in fetchMatchingPassengers:', error);
-      return [];
-    }
-  };
-
-  const handleOfferRide = async () => {
-    if (!pickup || !destination || !time) {
-      toast.error('Please fill all fields');
+  const handleSaveRide = async () => {
+    if (!pickup || !destination) {
+      toast.error('Please fill pickup and destination fields');
       return;
     }
 
-    setIsSearching(true);
-    // Calculate route info if not already set
-    if (!routeInfo && pickup && destination) {
-      const distance = calculateCityDistance(pickup, destination);
-      if (distance > 0) {
-        const fare = calculateFare(distance);
-        setRouteInfo({ distance, fare });
-      }
+    if (!user?.id) {
+      toast.error('Please sign in to save your ride');
+      return;
     }
+
+    setIsSaving(true);
     
-    // Fetch real passengers from Supabase
     try {
-      const passengers = await fetchMatchingPassengers();
-      setMatches(passengers);
-      setIsSearching(false);
-      toast.success(`Found ${passengers.length} matching passengers!`);
+      // Calculate route info if not already set
+      if (!routeInfo && pickup && destination) {
+        const distance = calculateCityDistance(pickup, destination);
+        if (distance > 0) {
+          const fare = calculateFare(distance);
+          setRouteInfo({ distance, fare });
+        }
+      }
+
+      // Save ride details to drivers_details table
+      const { error } = await supabase
+        .from('drivers_details')
+        .insert({
+          driver_id: user.id,
+          pick_up: pickup,
+          destination: destination,
+          pickup_location: { address: pickup },
+          destination_location: { address: destination },
+          pickup_time: new Date().toISOString(), // Current time as default
+          distance_km: routeInfo?.distance || calculateCityDistance(pickup, destination),
+          price: routeInfo?.fare || calculateFare(calculateCityDistance(pickup, destination) || 50),
+          status: 'pending'
+        });
+
+      if (error) {
+        console.error('Error saving ride:', error);
+        toast.error('Failed to save ride. Please try again.');
+      } else {
+        toast.success('Ride saved successfully!');
+        // Reset form
+        setPickup('');
+        setDestination('');
+        setRouteInfo(null);
+        setShowMap(false);
+      }
     } catch (error) {
-      console.error('Error fetching passengers:', error);
-      setIsSearching(false);
-      toast.error('Failed to find passengers. Please try again.');
+      console.error('Error saving ride:', error);
+      toast.error('Failed to save ride. Please try again.');
+    } finally {
+      setIsSaving(false);
     }
   };
-
-  const handleSelectPassenger = (passenger: MatchedPassenger) => {
-    // Navigate to confirmation page with passenger details
-    navigate("/ride-confirmation", {
-      state: {
-        passenger,
-        routeInfo,
-        passengers: 4 // Default for ride sharing
-      }
-    });
-  };
-
-  if (selectedMatch) {
-    return (
-      <div className="min-h-screen bg-background p-4">
-        <div className="container max-w-2xl mx-auto">
-          <div className="flex items-center mb-6">
-            <Button variant="ghost" onClick={() => setSelectedMatch(null)} className="mr-4">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <h1 className="text-2xl font-bold">Ride Confirmed</h1>
-          </div>
-
-          <Card className="mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Shield className="h-5 w-5 text-green-500" />
-                <span>Ride Details</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium">Driver (You)</Label>
-                  <p className="text-lg">{user?.full_name || 'Driver'}</p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Passenger</Label>
-                  <p className="text-lg">{selectedMatch.name}</p>
-                </div>
-              </div>
-              
-              <div className="space-y-2">
-                <div className="flex items-center space-x-2">
-                  <MapPin className="h-4 w-4 text-primary" />
-                  <span className="text-sm">Pickup: {selectedMatch.pickup}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <MapPin className="h-4 w-4 text-destructive" />
-                  <span className="text-sm">Destination: {selectedMatch.destination}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Time: {selectedMatch.time}</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm">Contact: {selectedMatch.phone}</span>
-                </div>
-                {selectedMatch.distance && selectedMatch.fare && (
-                  <div className="flex items-center space-x-2">
-                    <IndianRupee className="h-4 w-4 text-green-600" />
-                    <span className="text-sm">Distance: {selectedMatch.distance}km | Fare: ₹{selectedMatch.fare}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="bg-primary/10 p-4 rounded-lg">
-                <Label className="text-sm font-medium">Verification OTP</Label>
-                <p className="text-2xl font-bold text-primary">{otp}</p>
-                <p className="text-sm text-muted-foreground">Share this OTP with the passenger to start the ride</p>
-              </div>
-
-              <Button className="w-full" onClick={() => toast.success('Ride started successfully!')}>
-                Start Ride
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-background p-4">
@@ -222,16 +112,6 @@ const OfferRide = () => {
                   placeholder="Enter intercity destination (e.g., Pune, Jaipur)"
                 />
               </div>
-              
-              <div>
-                <Label htmlFor="time">Departure Time</Label>
-                <Input
-                  id="time"
-                  type="datetime-local"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                />
-              </div>
 
               {routeInfo && (
                 <div className="bg-primary/10 rounded-lg p-4">
@@ -253,14 +133,16 @@ const OfferRide = () => {
                   onClick={() => setShowMap(true)}
                   className="w-full"
                 >
+                  <MapPin className="h-4 w-4 mr-2" />
                   Use Google Maps
                 </Button>
                 <Button 
-                  onClick={handleOfferRide} 
+                  onClick={handleSaveRide} 
                   className="w-full"
-                  disabled={isSearching}
+                  disabled={isSaving}
                 >
-                  {isSearching ? 'Finding Passengers...' : 'Find Passengers'}
+                  <Save className="h-4 w-4 mr-2" />
+                  {isSaving ? 'Saving Ride...' : 'Save Ride'}
                 </Button>
               </div>
             </CardContent>
@@ -281,63 +163,9 @@ const OfferRide = () => {
                 setDestination(route.destination);
                 setRouteInfo({ distance: route.distance, fare: route.fare });
                 setShowMap(false);
-                toast.success('Route selected! Ready to find passengers.');
+                toast.success('Route selected! Ready to save your ride.');
               }}
             />
-          </div>
-        )}
-
-        {matches.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-semibold">Matching Passengers</h2>
-            {matches.map((passenger) => (
-              <Card key={passenger.id} className="cursor-pointer hover:shadow-lg transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-start mb-3">
-                    <div className="flex items-center space-x-3">
-                      <User className="h-8 w-8 text-primary" />
-                      <div>
-                        <h3 className="font-semibold">{passenger.name}</h3>
-                        <p className="text-sm text-muted-foreground">{passenger.phone}</p>
-                      </div>
-                    </div>
-                    <Badge variant="secondary">
-                      {passenger.compatibility}% Match
-                    </Badge>
-                  </div>
-                  
-                  <div className="space-y-2 mb-4">
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="h-4 w-4 text-primary" />
-                      <span className="text-sm">From: {passenger.pickup}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="h-4 w-4 text-destructive" />
-                      <span className="text-sm">To: {passenger.destination}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-sm">Time: {passenger.time}</span>
-                    </div>
-                    {passenger.distance && passenger.fare && (
-                      <div className="flex items-center space-x-2">
-                        <IndianRupee className="h-4 w-4 text-green-600" />
-                        <span className="text-sm font-medium">
-                          {passenger.distance}km | ₹{passenger.fare} total
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  <Button 
-                    onClick={() => handleSelectPassenger(passenger)}
-                    className="w-full"
-                  >
-                    Select This Passenger
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
           </div>
         )}
       </div>
