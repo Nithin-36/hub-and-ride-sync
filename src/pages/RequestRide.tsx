@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
+import { supabase } from '@/integrations/supabase/client';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,59 +43,84 @@ const RequestRide = () => {
   const [showPayment, setShowPayment] = useState(false);
   const [selectedDriver, setSelectedDriver] = useState<MatchedDriver | null>(null);
 
-  const generateMockDrivers = (): MatchedDriver[] => {
-    const distance = routeInfo?.distance || calculateCityDistance(pickup, destination) || 50;
-    const fare = routeInfo?.fare || calculateFare(distance);
-    
-    // Get registered drivers from localStorage
-    const registeredDrivers = JSON.parse(localStorage.getItem('registeredDrivers') || '[]');
-    
-    // If we have registered drivers, use them; otherwise use mock data
-    if (registeredDrivers.length > 0) {
-      return registeredDrivers.slice(0, 2).map((driver: any, index: number) => ({
-        id: driver.id,
-        name: driver.name,
-        phone: driver.phone,
-        pickup: pickup || 'Mumbai Central',
-        destination: destination || 'Pune Station',
-        time: index === 0 ? '09:00 AM' : '09:15 AM',
-        vehicle: driver.vehicle,
-        rating: 4.8 - (index * 0.2),
-        compatibility: 95 - (index * 8),
-        distance,
-        fare
-      }));
-    }
-    
-    // Fallback to mock drivers if no registered drivers
-    return [
-      {
-        id: '1',
-        name: 'Nithin Sharma',
-        phone: '+91 99887 76543',
-        pickup: pickup || 'Mumbai Central',
-        destination: destination || 'Pune Station',
-        time: '09:00 AM',
-        vehicle: 'Honda City - KA01AB1234',
-        rating: 4.8,
-        compatibility: 95,
-        distance,
-        fare
-      },
-      {
-        id: '2',
-        name: 'Arjun Kumar',
-        phone: '+91 88776 65432',
-        pickup: pickup || 'Delhi Railway Station',
-        destination: destination || 'Jaipur Bus Stand',
-        time: '09:15 AM',
-        vehicle: 'Maruti Swift - KA02CD5678',
-        rating: 4.6,
-        compatibility: 87,
-        distance,
-        fare
+  const fetchMatchingDrivers = async (): Promise<MatchedDriver[]> => {
+    try {
+      // Fetch matching drivers from drivers_details table
+      const { data: driverDetails, error } = await supabase
+        .from('drivers_details')
+        .select(`
+          id,
+          driver_id,
+          pick_up,
+          destination,
+          pickup_time,
+          distance_km,
+          price,
+          status
+        `)
+        .eq('status', 'pending')
+        .ilike('pick_up', `%${pickup}%`)
+        .ilike('destination', `%${destination}%`);
+
+      if (error) {
+        console.error('Error fetching driver details:', error);
+        return [];
       }
-    ];
+
+      if (!driverDetails || driverDetails.length === 0) {
+        return [];
+      }
+
+      // Get driver info for each matched ride
+      const driverIds = driverDetails.map(detail => detail.driver_id);
+      const { data: drivers, error: driversError } = await supabase
+        .from('drivers')
+        .select('userid, name')
+        .in('userid', driverIds);
+
+      if (driversError) {
+        console.error('Error fetching drivers:', driversError);
+        return [];
+      }
+
+      // Get user info for driver names and phone numbers
+      const { data: users, error: usersError } = await supabase
+        .from('app_users')
+        .select('id, full_name, phone')
+        .in('id', driverIds);
+
+      if (usersError) {
+        console.error('Error fetching user details:', usersError);
+        return [];
+      }
+
+      // Combine the data
+      return driverDetails.map((detail, index) => {
+        const driver = drivers?.find(d => d.userid === detail.driver_id);
+        const userInfo = users?.find(u => u.id === detail.driver_id);
+        
+        return {
+          id: detail.id,
+          name: userInfo?.full_name || driver?.name || 'Unknown Driver',
+          phone: userInfo?.phone || 'N/A',
+          pickup: detail.pick_up || pickup,
+          destination: detail.destination || destination,
+          time: new Date(detail.pickup_time).toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: true
+          }),
+          vehicle: 'Vehicle info not available', // This can be enhanced later
+          rating: 4.5 + (Math.random() * 0.5), // Mock rating for now
+          compatibility: Math.floor(Math.random() * 20) + 80,
+          distance: detail.distance_km || routeInfo?.distance || calculateCityDistance(pickup, destination),
+          fare: detail.price || routeInfo?.fare || calculateFare(detail.distance_km || 50)
+        };
+      });
+    } catch (error) {
+      console.error('Error in fetchMatchingDrivers:', error);
+      return [];
+    }
   };
 
   const handleRequestRide = async () => {
@@ -113,13 +139,22 @@ const RequestRide = () => {
       }
     }
     
-    // Simulate API call
-    setTimeout(() => {
-      const mockDrivers = generateMockDrivers();
-      setMatches(mockDrivers);
+    try {
+      // Fetch matching drivers from database
+      const matchingDrivers = await fetchMatchingDrivers();
+      setMatches(matchingDrivers);
       setIsSearching(false);
-      toast.success(`Found ${mockDrivers.length} matching drivers!`);
-    }, 2000);
+      
+      if (matchingDrivers.length === 0) {
+        toast.error('No matching drivers found for this route. Please try different locations.');
+      } else {
+        toast.success(`Found ${matchingDrivers.length} matching drivers!`);
+      }
+    } catch (error) {
+      console.error('Error finding drivers:', error);
+      setIsSearching(false);
+      toast.error('Failed to find drivers. Please try again.');
+    }
   };
 
   const handleSelectDriver = (driver: MatchedDriver) => {
