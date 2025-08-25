@@ -33,7 +33,7 @@ const HeroSection = () => {
             {/* Become a Driver */}
             <div className="bg-card border border-border rounded-xl p-6 hover:shadow-lg transition-shadow cursor-pointer" onClick={() => navigate('/auth')}>
               <div className="bg-secondary/10 p-3 rounded-lg w-fit mx-auto mb-4">
-                <Car className="h-8 w-8 text-secondary" />
+                <Car className="h-8 w-8 text-secondary bg-green-700" />
               </div>
               <h3 className="text-xl font-semibold mb-2">Become a Driver</h3>
               <p className="text-muted-foreground mb-4">
