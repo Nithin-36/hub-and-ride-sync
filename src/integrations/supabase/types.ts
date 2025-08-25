@@ -49,44 +49,21 @@ export type Database = {
       }
       drivers: {
         Row: {
-          created_at: string
-          id: string
-          is_available: boolean
-          license_number: string
-          updated_at: string
-          user_id: string
-          vehicle_model: string
-          vehicle_number: string
+          name: string | null
+          role: string | null
+          userid: string
         }
         Insert: {
-          created_at?: string
-          id?: string
-          is_available?: boolean
-          license_number: string
-          updated_at?: string
-          user_id: string
-          vehicle_model: string
-          vehicle_number: string
+          name?: string | null
+          role?: string | null
+          userid: string
         }
         Update: {
-          created_at?: string
-          id?: string
-          is_available?: boolean
-          license_number?: string
-          updated_at?: string
-          user_id?: string
-          vehicle_model?: string
-          vehicle_number?: string
+          name?: string | null
+          role?: string | null
+          userid?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "drivers_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "app_users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       drivers_details: {
         Row: {
@@ -143,45 +120,27 @@ export type Database = {
             columns: ["driver_id"]
             isOneToOne: false
             referencedRelation: "drivers"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "drivers_details_passenger_id_fkey"
-            columns: ["passenger_id"]
-            isOneToOne: false
-            referencedRelation: "passengers"
-            referencedColumns: ["id"]
+            referencedColumns: ["userid"]
           },
         ]
       }
       passengers: {
         Row: {
-          created_at: string
-          id: string
-          updated_at: string
-          user_id: string
+          name: string | null
+          role: string | null
+          userid: string
         }
         Insert: {
-          created_at?: string
-          id?: string
-          updated_at?: string
-          user_id: string
+          name?: string | null
+          role?: string | null
+          userid: string
         }
         Update: {
-          created_at?: string
-          id?: string
-          updated_at?: string
-          user_id?: string
+          name?: string | null
+          role?: string | null
+          userid?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "passengers_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: true
-            referencedRelation: "app_users"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       passengers_details: {
         Row: {
@@ -234,18 +193,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "passengers_details_driver_id_fkey"
-            columns: ["driver_id"]
-            isOneToOne: false
-            referencedRelation: "drivers"
-            referencedColumns: ["id"]
-          },
-          {
             foreignKeyName: "passengers_details_passenger_id_fkey"
             columns: ["passenger_id"]
             isOneToOne: false
             referencedRelation: "passengers"
-            referencedColumns: ["id"]
+            referencedColumns: ["userid"]
           },
         ]
       }
