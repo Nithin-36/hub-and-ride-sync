@@ -207,6 +207,130 @@ export type Database = {
           },
         ]
       }
+      rides: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          destination: string | null
+          destination_location: Json
+          distance_km: number | null
+          driver_id: string
+          feedback: string | null
+          id: string
+          pick_up: string | null
+          pickup_location: Json
+          pickup_time: string
+          price: number | null
+          rating: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          destination?: string | null
+          destination_location: Json
+          distance_km?: number | null
+          driver_id: string
+          feedback?: string | null
+          id?: string
+          pick_up?: string | null
+          pickup_location: Json
+          pickup_time: string
+          price?: number | null
+          rating?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          destination?: string | null
+          destination_location?: Json
+          distance_km?: number | null
+          driver_id?: string
+          feedback?: string | null
+          id?: string
+          pick_up?: string | null
+          pickup_location?: Json
+          pickup_time?: string
+          price?: number | null
+          rating?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rides_driver_id_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["userid"]
+          },
+        ]
+      }
+      rides_history: {
+        Row: {
+          created_at: string
+          driver_id: string
+          id: string
+          passenger_detail_id: string
+          passenger_id: string
+          ride_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          driver_id: string
+          id?: string
+          passenger_detail_id: string
+          passenger_id: string
+          ride_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          driver_id?: string
+          id?: string
+          passenger_detail_id?: string
+          passenger_id?: string
+          ride_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rides_history_driver_fkey"
+            columns: ["driver_id"]
+            isOneToOne: false
+            referencedRelation: "drivers"
+            referencedColumns: ["userid"]
+          },
+          {
+            foreignKeyName: "rides_history_passenger_detail_fkey"
+            columns: ["passenger_detail_id"]
+            isOneToOne: true
+            referencedRelation: "passengers_details"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rides_history_passenger_fkey"
+            columns: ["passenger_id"]
+            isOneToOne: false
+            referencedRelation: "passengers"
+            referencedColumns: ["userid"]
+          },
+          {
+            foreignKeyName: "rides_history_ride_fkey"
+            columns: ["ride_id"]
+            isOneToOne: false
+            referencedRelation: "rides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
