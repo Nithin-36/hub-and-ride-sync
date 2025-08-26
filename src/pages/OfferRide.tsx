@@ -43,9 +43,9 @@ const OfferRide = () => {
         }
       }
 
-      // Save ride details to rides table
+      // Save ride details to drivers_details table
       const { error } = await supabase
-        .from('rides')
+        .from('drivers_details')
         .insert({
           driver_id: user.id,
           pick_up: pickup,
