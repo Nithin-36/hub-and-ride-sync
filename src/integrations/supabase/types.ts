@@ -81,6 +81,7 @@ export type Database = {
           pickup_time: string
           price: number | null
           rating: number | null
+          ride_id: string | null
           status: string
           updated_at: string
         }
@@ -99,6 +100,7 @@ export type Database = {
           pickup_time: string
           price?: number | null
           rating?: number | null
+          ride_id?: string | null
           status?: string
           updated_at?: string
         }
@@ -117,16 +119,17 @@ export type Database = {
           pickup_time?: string
           price?: number | null
           rating?: number | null
+          ride_id?: string | null
           status?: string
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "drivers_details_driver_id_fkey"
-            columns: ["driver_id"]
+            foreignKeyName: "drivers_details_ride_id_fkey"
+            columns: ["ride_id"]
             isOneToOne: false
-            referencedRelation: "drivers"
-            referencedColumns: ["userid"]
+            referencedRelation: "rides"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -316,6 +319,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "rides_history_passenger_detail_id_fkey"
+            columns: ["passenger_detail_id"]
+            isOneToOne: true
+            referencedRelation: "passengers_details"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "rides_history_passenger_fkey"
             columns: ["passenger_id"]
             isOneToOne: false
@@ -324,6 +334,13 @@ export type Database = {
           },
           {
             foreignKeyName: "rides_history_ride_fkey"
+            columns: ["ride_id"]
+            isOneToOne: false
+            referencedRelation: "rides"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rides_history_ride_id_fkey"
             columns: ["ride_id"]
             isOneToOne: false
             referencedRelation: "rides"

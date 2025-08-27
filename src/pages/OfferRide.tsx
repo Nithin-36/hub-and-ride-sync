@@ -43,9 +43,9 @@ const OfferRide = () => {
         }
       }
 
-      // Save ride details to drivers_details table
+      // Save ride details to rides table (will sync to drivers_details via trigger)
       const { error } = await supabase
-        .from('drivers_details')
+        .from('rides')
         .insert({
           driver_id: user.id,
           pick_up: pickup,
