@@ -8,7 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowLeft, MapPin, Save } from 'lucide-react';
 import { toast } from 'sonner';
-import GoogleMap from '@/components/GoogleMap';
+import SimpleMap from '@/components/SimpleMap';
 import { calculateCityDistance, calculateFare } from '@/utils/distanceCalculator';
 
 const OfferRide = () => {
@@ -134,7 +134,7 @@ const OfferRide = () => {
                   className="w-full"
                 >
                   <MapPin className="h-4 w-4 mr-2" />
-                  Use Google Maps
+                  Use OpenStreet Map
                 </Button>
                 <Button 
                   onClick={handleSaveRide} 
@@ -155,7 +155,7 @@ const OfferRide = () => {
                 Back to Form
               </Button>
             </div>
-            <GoogleMap 
+            <SimpleMap 
               pickup={pickup}
               destination={destination}
               onRouteSelect={(route) => {
