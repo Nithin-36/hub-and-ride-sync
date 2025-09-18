@@ -49,16 +49,19 @@ export type Database = {
       }
       drivers: {
         Row: {
+          license_number: string | null
           name: string | null
           role: string | null
           userid: string
         }
         Insert: {
+          license_number?: string | null
           name?: string | null
           role?: string | null
           userid: string
         }
         Update: {
+          license_number?: string | null
           name?: string | null
           role?: string | null
           userid?: string
@@ -267,8 +270,8 @@ export type Database = {
             foreignKeyName: "rides_driver_id_fkey"
             columns: ["driver_id"]
             isOneToOne: false
-            referencedRelation: "drivers"
-            referencedColumns: ["userid"]
+            referencedRelation: "app_users"
+            referencedColumns: ["id"]
           },
         ]
       }
