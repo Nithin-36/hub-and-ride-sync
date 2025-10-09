@@ -41,6 +41,25 @@ export const useMatching = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Normalize location strings for accurate comparison
+  const normalizeLocation = (location: string): string => {
+    return location.toLowerCase().trim().replace(/[,.\s]+/g, ' ');
+  };
+
+  // Check if two locations are the same or very similar
+  const isSameLocation = (loc1: string, loc2: string): boolean => {
+    const norm1 = normalizeLocation(loc1);
+    const norm2 = normalizeLocation(loc2);
+    
+    // Exact match
+    if (norm1 === norm2) return true;
+    
+    // Check if one contains the other (for "City, State" vs "City" scenarios)
+    if (norm1.includes(norm2) || norm2.includes(norm1)) return true;
+    
+    return false;
+  };
+
   // Calculate compatibility score between two locations and times
   const calculateCompatibilityScore = (
     pickup1: string, dest1: string, time1: string,
@@ -48,31 +67,48 @@ export const useMatching = () => {
   ): number => {
     let score = 0;
 
-    // Route compatibility (60% weight)
-    const pickupDistance = calculateCityDistance(pickup1, pickup2);
-    const destDistance = calculateCityDistance(dest1, dest2);
-    
-    // If same cities or nearby (within 50km), high route compatibility
-    if (pickupDistance <= 50 && destDistance <= 50) {
-      score += 60;
-    } else if (pickupDistance <= 100 && destDistance <= 100) {
-      score += 40;
-    } else if (pickupDistance <= 200 && destDistance <= 200) {
-      score += 20;
+    // DESTINATION MATCHING (70% weight) - Most important for accurate matching
+    if (isSameLocation(dest1, dest2)) {
+      // Exact destination match - highest priority
+      score += 70;
+    } else {
+      // Fallback to distance-based matching for destinations
+      const destDistance = calculateCityDistance(dest1, dest2);
+      if (destDistance <= 30) {
+        score += 50; // Very close destinations
+      } else if (destDistance <= 80) {
+        score += 30; // Nearby destinations
+      } else if (destDistance <= 150) {
+        score += 15; // Moderately close
+      }
     }
 
-    // Time compatibility (40% weight)
+    // PICKUP MATCHING (20% weight) - Secondary priority
+    if (isSameLocation(pickup1, pickup2)) {
+      score += 20;
+    } else {
+      const pickupDistance = calculateCityDistance(pickup1, pickup2);
+      if (pickupDistance <= 30) {
+        score += 15;
+      } else if (pickupDistance <= 80) {
+        score += 10;
+      } else if (pickupDistance <= 150) {
+        score += 5;
+      }
+    }
+
+    // TIME COMPATIBILITY (10% weight) - Least priority but still important
     const timeDiff = Math.abs(new Date(time1).getTime() - new Date(time2).getTime());
     const hoursDiff = timeDiff / (1000 * 60 * 60);
     
     if (hoursDiff <= 1) {
-      score += 40;
-    } else if (hoursDiff <= 2) {
-      score += 30;
-    } else if (hoursDiff <= 4) {
-      score += 20;
-    } else if (hoursDiff <= 8) {
       score += 10;
+    } else if (hoursDiff <= 2) {
+      score += 8;
+    } else if (hoursDiff <= 4) {
+      score += 5;
+    } else if (hoursDiff <= 8) {
+      score += 3;
     }
 
     return Math.min(score, 100);
@@ -148,7 +184,7 @@ export const useMatching = () => {
           } as DriverOffer;
         })
         .filter((offer): offer is DriverOffer => offer !== null)
-        .filter(offer => offer.compatibility_score! >= 20) // Min 20% compatibility
+        .filter(offer => offer.compatibility_score! >= 40) // Min 40% compatibility for better matches
         .sort((a, b) => (b.compatibility_score || 0) - (a.compatibility_score || 0));
 
       setDriverOffers(driverOffers);
@@ -238,7 +274,7 @@ export const useMatching = () => {
           } as PassengerRequest;
         })
         .filter((request): request is PassengerRequest => request !== null)
-        .filter(request => request.compatibility_score! >= 20) // Min 20% compatibility
+        .filter(request => request.compatibility_score! >= 40) // Min 40% compatibility for better matches
         .sort((a, b) => (b.compatibility_score || 0) - (a.compatibility_score || 0));
 
       setPassengerRequests(passengerRequests);
