@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Users, MapPin, Clock, Phone, Search } from 'lucide-react';
+import { ArrowLeft, Users, MapPin, Clock, Phone, Search, Bell } from 'lucide-react';
 import { toast } from 'sonner';
 import { useMatching, PassengerRequest } from '@/hooks/useMatching';
 import { format } from 'date-fns';
@@ -28,6 +28,8 @@ const FindPassengers = () => {
   const [selectedRide, setSelectedRide] = useState<DriverRide | null>(null);
   const [passengerRequests, setPassengerRequests] = useState<PassengerRequest[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [newRequestsCount, setNewRequestsCount] = useState(0);
+  const [autoSearchEnabled, setAutoSearchEnabled] = useState(true);
 
   // Fetch driver's active rides
   useEffect(() => {
@@ -44,6 +46,11 @@ const FindPassengers = () => {
 
         if (error) throw error;
         setDriverRides(data || []);
+        
+        // Auto-search for first ride if enabled
+        if (data && data.length > 0 && autoSearchEnabled && !selectedRide) {
+          handleSearchPassengers(data[0]);
+        }
       } catch (error: any) {
         console.error('Error fetching driver rides:', error);
         toast.error('Failed to load your rides');
@@ -53,9 +60,66 @@ const FindPassengers = () => {
     fetchDriverRides();
   }, [user?.id]);
 
+  // Real-time subscription for new passenger requests
+  useEffect(() => {
+    if (!user?.id || !selectedRide) return;
+
+    const channel = supabase
+      .channel('passenger-requests-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'passengers_details',
+          filter: `status=eq.pending`
+        },
+        async (payload) => {
+          // Check if this new request matches any of the driver's routes
+          const newRequest = payload.new;
+          const pickupAddr = typeof newRequest.pickup_location === 'object' 
+            ? (newRequest.pickup_location as any)?.address || ''
+            : newRequest.pickup_location || '';
+          const destAddr = typeof newRequest.destination_location === 'object'
+            ? (newRequest.destination_location as any)?.address || ''
+            : newRequest.destination_location || '';
+
+          // Check compatibility with current selected ride
+          if (selectedRide) {
+            const { calculateCompatibilityScore } = useMatching();
+            const score = calculateCompatibilityScore(
+              selectedRide.pick_up,
+              selectedRide.destination,
+              selectedRide.pickup_time,
+              pickupAddr,
+              destAddr,
+              newRequest.pickup_time
+            );
+
+            if (score >= 40) {
+              setNewRequestsCount(prev => prev + 1);
+              toast.success('New passenger request matches your route!', {
+                description: `${pickupAddr} → ${destAddr}`,
+                action: {
+                  label: 'View',
+                  onClick: () => handleSearchPassengers(selectedRide)
+                }
+              });
+            }
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, selectedRide]);
+
   const handleSearchPassengers = async (ride: DriverRide) => {
     setSelectedRide(ride);
     setIsSearching(true);
+    setNewRequestsCount(0); // Reset notification count
     
     try {
       const matchingPassengers = await findMatchingPassengers(
@@ -130,19 +194,32 @@ const FindPassengers = () => {
   return (
     <div className="min-h-screen bg-background p-4">
       <div className="container max-w-4xl mx-auto">
-        <div className="flex items-center mb-6">
-          <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mr-4">
-            <ArrowLeft className="h-4 w-4" />
-          </Button>
-          <h1 className="text-2xl font-bold">Find Passengers</h1>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center">
+            <Button variant="ghost" onClick={() => navigate('/dashboard')} className="mr-4">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+            <h1 className="text-2xl font-bold">Find Passengers</h1>
+          </div>
+          {newRequestsCount > 0 && (
+            <Badge variant="default" className="bg-green-500 text-white animate-pulse">
+              <Bell className="h-4 w-4 mr-1" />
+              {newRequestsCount} New Request{newRequestsCount > 1 ? 's' : ''}
+            </Badge>
+          )}
         </div>
 
         {/* Driver's Active Rides */}
         <Card className="mb-6">
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Users className="h-5 w-5 mr-2" />
-              Your Active Rides
+            <CardTitle className="flex items-center justify-between">
+              <div className="flex items-center">
+                <Users className="h-5 w-5 mr-2" />
+                Your Active Rides
+              </div>
+              <Badge variant="outline" className="text-xs">
+                Auto-matching enabled
+              </Badge>
             </CardTitle>
           </CardHeader>
           <CardContent>
