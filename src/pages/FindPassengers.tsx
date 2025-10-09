@@ -22,7 +22,7 @@ interface DriverRide {
 const FindPassengers = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const { findMatchingPassengers, acceptRideRequest, loading } = useMatching();
+  const { findMatchingPassengers, acceptRideRequest, loading, calculateCompatibilityScore } = useMatching();
   
   const [driverRides, setDriverRides] = useState<DriverRide[]>([]);
   const [selectedRide, setSelectedRide] = useState<DriverRide | null>(null);
@@ -86,7 +86,6 @@ const FindPassengers = () => {
 
           // Check compatibility with current selected ride
           if (selectedRide) {
-            const { calculateCompatibilityScore } = useMatching();
             const score = calculateCompatibilityScore(
               selectedRide.pick_up,
               selectedRide.destination,
@@ -114,7 +113,7 @@ const FindPassengers = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, selectedRide]);
+  }, [user?.id, selectedRide, calculateCompatibilityScore]);
 
   const handleSearchPassengers = async (ride: DriverRide) => {
     setSelectedRide(ride);
