@@ -156,6 +156,7 @@ const FindRides = () => {
                   type="datetime-local"
                   value={pickupTime}
                   onChange={(e) => setPickupTime(e.target.value)}
+                  min={new Date().toISOString().slice(0, 16)}
                 />
               </div>
 
