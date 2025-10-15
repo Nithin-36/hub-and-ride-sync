@@ -60,10 +60,10 @@ const HeroSection = () => {
           </div>
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" onClick={() => navigate('/auth')}>
+            <Button size="lg" onClick={() => navigate('/auth', { state: { mode: 'signup', role: 'passenger' } })}>
               Join as Passenger
             </Button>
-            <Button size="lg" variant="outline" onClick={() => navigate('/auth')} className="font-bold text-slate-50 bg-green-700 hover:bg-green-600">
+            <Button size="lg" variant="outline" onClick={() => navigate('/auth', { state: { mode: 'signup', role: 'driver' } })} className="font-bold text-slate-50 bg-green-700 hover:bg-green-600">
               Register as Driver
             </Button>
           </div>

@@ -200,28 +200,16 @@ const PaymentComponent: React.FC<PaymentComponentProps> = ({
         {/* Payment Options */}
         <div className="space-y-3">
           <p className="text-sm font-medium">Payment Method</p>
-          <div className="grid grid-cols-2 gap-2">
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handlePayment}
-              disabled={isProcessing}
-              className="w-full"
-            >
-              <CreditCard className="h-4 w-4 mr-2" />
-              {isProcessing ? 'Processing...' : 'Card'}
-            </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handlePayment}
-              disabled={isProcessing}
-              className="w-full"
-            >
-              <IndianRupee className="h-4 w-4 mr-2" />
-              UPI
-            </Button>
-          </div>
+          <Button 
+            variant="default" 
+            size="lg"
+            onClick={handlePayment}
+            disabled={isProcessing}
+            className="w-full"
+          >
+            <IndianRupee className="h-5 w-5 mr-2" />
+            {isProcessing ? 'Processing Payment...' : 'Pay Now'}
+          </Button>
         </div>
 
         {paymentStatus === 'failed' && (
